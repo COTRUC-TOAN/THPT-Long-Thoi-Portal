@@ -1675,7 +1675,14 @@ function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
         let options = ['', '', '', ''];
         let ans = '';
         let ansOptions = [];
+        let explanation = '';
         let qLines = [];
+
+        let expIdx = lines.findIndex(l => /^(?:L[ờo]i\s*gi[ảa]i|H[ưướ]ng\s*dẫ?n|Lời\s*giải\s*chi\s*tiết)\s*[:\-]?/i.test(l));
+        if (expIdx !== -1) {
+            explanation = lines[expIdx].replace(/^(?:L[ờo]i\s*gi[ảa]i|H[ưướ]ng\s*dẫ?n|Lời\s*giải\s*chi\s*tiết)\s*[:\-]?\s*/i, '').trim();
+            lines.splice(expIdx, 1);
+        }
 
         let ansIdx = lines.findIndex(l => /^(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?/i.test(l));
         if (ansIdx !== -1) {
@@ -1758,7 +1765,8 @@ function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
             q: qContent,
             options: options,
             ans: ans,
-            ansOptions: ansOptions
+            ansOptions: ansOptions,
+            explanation: explanation
         });
     });
 
