@@ -1284,15 +1284,24 @@ function processTopicsData(rawTopics) {
                 }
             }
 
-            const expBox = document.getElementById(`exp_q_${idx + 1}`);
-            if (expBox) {
-                let ansText = q.ans;
-                if (qType === 'TF' && q.ansOptions) {
-                    ansText = `a) ${q.ansOptions[0] == 'D' ? 'Đúng' : 'Sai'}, b) ${q.ansOptions[1] == 'D' ? 'Đúng' : 'Sai'}, c) ${q.ansOptions[2] == 'D' ? 'Đúng' : 'Sai'}, d) ${q.ansOptions[3] == 'D' ? 'Đúng' : 'Sai'}`;
-                }
-                expBox.innerHTML = `<strong>Đáp án:</strong> <span style="color: #16a34a; font-weight: bold;">${ansText}</span>${q.explanation ? '<br><strong>Hướng dẫn:</strong> ' + q.explanation : ''}`;
-                expBox.style.display = 'block';
-            }
+           const expBox = document.getElementById(`exp_q_${idx + 1}`);
+if (expBox) {
+    let ansText = q.ans;
+    if (qType === 'TF' && q.ansOptions) {
+        ansText = `a) ${q.ansOptions[0] == 'D' ? 'Đúng' : 'Sai'}, b) ${q.ansOptions[1] == 'D' ? 'Đúng' : 'Sai'}, c) ${q.ansOptions[2] == 'D' ? 'Đúng' : 'Sai'}, d) ${q.ansOptions[3] == 'D' ? 'Đúng' : 'Sai'}`;
+    }
+    
+    // In rõ ràng đáp án kèm theo lời giải chi tiết (explanation)
+    let explanationHtml = q.explanation ? `<br><div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; color: #1e293b;"><strong>Lời giải chi tiết:</strong> ${q.explanation}</div>` : '';
+    
+    expBox.innerHTML = `<strong>Đáp án đúng:</strong> <span style="color: #16a34a; font-weight: bold;">${ansText}</span>${explanationHtml}`;
+    expBox.style.display = 'block';
+    
+    // Cập nhật lại định dạng toán học MathJax cho phần lời giải nếu có công thức LaTeX
+    if (window.renderMath) {
+        renderMath(expBox);
+    }
+}
         });
 
         if (window.renderMath) {
