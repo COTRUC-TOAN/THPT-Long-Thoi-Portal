@@ -531,7 +531,105 @@
     <div class="toast-msg" id="toast">Đã sao chép link giao đề!</div>
 
     <script>
-       const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzis37_BfronfYS2csvtAfqZJOcQBHzmbZtymoNPFtLdGgI3ghiNUXCHuVq4i6Gsetw/exec";
+// DANH MỤC GIÁO VIÊN HỆ THỐNG
+        const TEACHERS_DIRECTORY = {
+            'trucnt':  { name: 'Cô Nguyễn Thanh Trúc', subject: 'Toán', defaultUrl: 'https://script.google.com/macros/s/AKfycbzis37_BfronfYS2csvtAfqZJOcQBHzmbZtymoNPFtLdGgI3ghiNUXCHuVq4i6Gsetw/exec' },
+            'vanntkt': { name: 'Cô Nguyễn Thị Kiều Tuyết Vân', subject: 'Toán', defaultUrl: '' },
+            'hoantt':  { name: 'Cô Nguyễn Thị Thu Hoa', subject: 'Toán', defaultUrl: '' },
+            'nhuntq':  { name: 'Cô Nguyễn Thị Quỳnh Như', subject: 'Toán', defaultUrl: '' },
+            'trunght': { name: 'Thầy Hồ Thanh Trung', subject: 'Toán', defaultUrl: '' },
+            'nampn':   { name: 'Thầy Phạm Nhật Nam', subject: 'Toán', defaultUrl: '' },
+            'chauttm': { name: 'Cô Trần Thị Minh Châu', subject: 'Toán', defaultUrl: '' },
+            'thanhvv': { name: 'Thầy Vũ Văn Thanh', subject: 'GD Quốc Phòng', defaultUrl: '' }
+        };
+
+        let currentTeacherId = localStorage.getItem('current_teacher_id') || '';
+        let SCRIPT_URL = '';
+
+        function getTeacherScriptUrl(tId) {
+            let savedUrl = localStorage.getItem('teacher_script_url_' + tId);
+            if (savedUrl && savedUrl.trim() !== '') return savedUrl.trim();
+            if (TEACHERS_DIRECTORY[tId] && TEACHERS_DIRECTORY[tId].defaultUrl) {
+                return TEACHERS_DIRECTORY[tId].defaultUrl;
+            }
+            return '';
+        }
+
+        function handleTeacherSelectChange() {
+            const tId = document.getElementById('gate-select-teacher').value;
+            const urlRow = document.getElementById('gate-script-url-row');
+            const urlInput = document.getElementById('gate-script-url-input');
+            if (!tId) {
+                urlRow.style.display = 'none';
+                return;
+            }
+            const existingUrl = getTeacherScriptUrl(tId);
+            if (!existingUrl) {
+                urlRow.style.display = 'block';
+                urlInput.value = '';
+            } else {
+                urlRow.style.display = 'none';
+                urlInput.value = existingUrl;
+            }
+        }
+
+        async function submitTeacherGateLogin() {
+            const tId = document.getElementById('gate-select-teacher').value;
+            const pass = document.getElementById('gate-password-input').value.trim();
+            const urlInput = document.getElementById('gate-script-url-input').value.trim();
+
+            if (!tId) {
+                alert("Vui lòng chọn một Giáo viên!");
+                return;
+            }
+            if (!pass) {
+                alert("Vui lòng nhập Mật khẩu quản trị của file Sheets!");
+                return;
+            }
+
+            let targetUrl = getTeacherScriptUrl(tId);
+            if (!targetUrl) {
+                if (!urlInput || !urlInput.startsWith('https://script.google.com/')) {
+                    alert("Vui lòng dán chính xác đường link Google Apps Script (.exec) của bạn!");
+                    return;
+                }
+                targetUrl = urlInput;
+                localStorage.setItem('teacher_script_url_' + tId, targetUrl);
+            }
+
+            document.body.style.cursor = 'wait';
+            try {
+                const res = await fetch(`${targetUrl}?action=checkPassword&password=${encodeURIComponent(pass)}`);
+                const data = await res.json();
+                document.body.style.cursor = 'default';
+
+                if (data.status === 'success') {
+                    currentTeacherId = tId;
+                    SCRIPT_URL = targetUrl;
+                    teacherPassAuth = pass;
+                    localStorage.setItem('current_teacher_id', tId);
+
+                    document.getElementById('teacher-portal-gate').style.display = 'none';
+                    const brandEl = document.querySelector('.navbar .brand');
+                    if (brandEl && TEACHERS_DIRECTORY[tId]) {
+                        brandEl.innerHTML = `<i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> ${TEACHERS_DIRECTORY[tId].name.toUpperCase()} - ${TEACHERS_DIRECTORY[tId].subject.toUpperCase()}`;
+                    }
+
+                    fetchData();
+                } else {
+                    alert("❌ Mật khẩu quản trị không chính xác với Google Sheets của bạn!");
+                }
+            } catch (err) {
+                document.body.style.cursor = 'default';
+                alert("Không thể kết nối đến Google Sheets này! Vui lòng kiểm tra lại đường link hoặc quyền triển khai (Anyone).");
+            }
+        }
+
+        function switchActiveTeacher() {
+            if (!confirm("Bạn muốn đổi sang Giáo viên khác làm việc?")) return;
+            localStorage.removeItem('current_teacher_id');
+            location.reload();
+        }
 
         let examBank = []; let questionBank = [];
         let selectedQuestions = []; let directParsedQuestions = []; 
