@@ -112,8 +112,8 @@
         .form-row { margin-bottom: 12px; }
         .form-row label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 1.05rem; color: #334155; }
         .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.05rem; outline: none; background: #fff; font-family: 'Times New Roman', Times, serif; }
-          .rich-textarea { width: 100%; height: 600px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.15rem; outline: none; background: #fff; overflow-y: auto; font-family: 'Times New Roman', Times, serif; line-height: 1.6; }    
-.preview-box { background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 80px; font-size: 1.05rem; line-height: 1.5; color: #1e293b; max-height: none; overflow-y: auto; }
+       .rich-textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.15rem; outline: none; background: #fff; overflow-y: auto; font-family: 'Times New Roman', Times, serif; line-height: 1.6; }
+.preview-box { background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 80px; font-size: 1.05rem; line-height: 1.5; color: #1e293b; overflow-y: auto; }
         .parsed-q-preview-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 10px; line-height: 1.5; }
         .parsed-q-preview-card strong { color: #1e40af; }
         .parsed-q-preview-card p { margin: 0; padding: 0; }
@@ -374,13 +374,13 @@
                         <!-- TẠO ĐỀ NHANH ALL-IN-ONE THÔNG MINH -->
                         <div id="add-method-paste">
                             <p style="font-size: 0.95rem; color: #1e40af; font-weight: bold; margin-bottom: 10px;">✨ Chế độ Tự Động: Dán hỗn hợp mọi dạng câu hỏi (Trắc nghiệm, Đúng/Sai, Ngắn), hệ thống tự bóc tách chuẩn 100% không cần chọn dạng!</p>
-                    <div class="rich-textarea" id="direct-raw-text" contenteditable="true" style="height: 600px;" placeholder="Dán văn bản đề thi..."></div>
+                  <div class="rich-textarea" id="direct-raw-text" contenteditable="true" style="height: 60vh; max-height: 60vh;" placeholder="Dán văn bản đề thi..."></div>
                             <button class="btn-start" style="width: 100%; background: #2563eb; margin-top: 10px;" onclick="parseDirectExam()"><i class="fa-solid fa-wand-magic-sparkles"></i> Tự Động Phân Tích</button>
                             <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                                 <strong style="color: #334155;">Xem Trước Gọn Gàng (<span id="direct-parsed-count">0</span> câu)</strong>
                                 <button class="btn-start" id="btn-save-parsed-bank" style="background: #059669; padding: 4px 10px; font-size: 0.9rem; display: none;" onclick="saveBankBulkToSheets()">Lưu Ngân Hàng</button>
                             </div>
-                           <div class="preview-box" id="direct-preview-box" style="max-height: none; overflow-y: auto;"><em>Chưa bóc tách.</em></div>
+                       <div class="preview-box" id="direct-preview-box" style="height: 40vh; max-height: 40vh; overflow-y: auto;"><em>Chưa bóc tách.</em></div>
                         </div>
 
                         <div id="add-method-bank" style="display: none;">
