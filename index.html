@@ -177,7 +177,47 @@
     </style>
 </head>
 <body>
+<!-- MÀN HÌNH CHỌN VÀ LIÊN KẾT GIÁO VIÊN BAN ĐẦU -->
+    <div id="teacher-portal-gate" style="position: fixed; inset: 0; background: #0f172a; z-index: 999999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 460px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center;">
+            <div style="width: 65px; height: 65px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #1d4ed8; font-size: 1.8rem;">
+                <i class="fa-solid fa-chalkboard-user"></i>
+            </div>
+            <h2 style="font-size: 1.35rem; color: #0f172a; margin-bottom: 6px; font-weight: bold;">CỔNG DẠY HỌC THPT</h2>
+            <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 22px;">Vui lòng chọn tài khoản giáo viên để làm việc</p>
 
+            <div style="text-align: left; margin-bottom: 14px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; color: #334155;">Chọn Giáo Viên:</label>
+                <select id="gate-select-teacher" class="form-input" style="font-weight: 600; padding: 10px;" onchange="handleTeacherSelectChange()">
+                    <option value="">-- Chọn danh sách giáo viên --</option>
+                    <option value="trucnt">1. Nguyễn Thanh Trúc (Tổ Toán)</option>
+                    <option value="vanntkt">2. Nguyễn Thị Kiều Tuyết Vân (Tổ Toán)</option>
+                    <option value="hoantt">3. Nguyễn Thị Thu Hoa (Tổ Toán)</option>
+                    <option value="nhuntq">4. Nguyễn Thị Quỳnh Như (Tổ Toán)</option>
+                    <option value="trunght">5. Hồ Thanh Trung (Tổ Toán)</option>
+                    <option value="nampn">6. Phạm Nhật Nam (Tổ Toán)</option>
+                    <option value="chauttm">7. Trần Thị Minh Châu (Tổ Toán)</option>
+                    <option value="thanhvv">8. Vũ Văn Thanh (Tổ GDQP)</option>
+                </select>
+            </div>
+
+            <!-- Khung nhập link Apps Script cá nhân (Tự hiện khi chưa có link lưu trữ) -->
+            <div id="gate-script-url-row" style="text-align: left; margin-bottom: 14px; display: none;">
+                <label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; color: #dc2626;">Liên kết Google Apps Script của Thầy/Cô:</label>
+                <input type="text" id="gate-script-url-input" class="form-input" placeholder="Dán link https://script.google.com/.../exec vào đây" style="font-size: 0.9rem;">
+                <small style="color: #64748b; font-size: 0.8rem; display: block; margin-top: 4px;">* Link sẽ tự động lưu lại trên máy này cho các lần truy cập sau.</small>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 22px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.95rem; color: #334155;">Mật khẩu quản trị (của Sheets cá nhân):</label>
+                <input type="password" id="gate-password-input" class="form-input" placeholder="Nhập mật khẩu quản trị..." style="padding: 10px;">
+            </div>
+
+            <button type="button" class="btn-start" style="width: 100%; padding: 12px; font-size: 1.1rem; justify-content: center; background: #1d4ed8;" onclick="submitTeacherGateLogin()">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng Nhập Vào Cổng
+            </button>
+        </div>
+    </div>
     <div class="wrapper">
         <nav class="navbar">
             <div class="brand">
