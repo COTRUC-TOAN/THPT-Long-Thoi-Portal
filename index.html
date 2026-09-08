@@ -1233,6 +1233,7 @@ function renderTeacherExamList() {
             });
             document.getElementById('bank-selected-box').style.display = (method === 'bank' || method === 'matrix') ? 'block' : 'none';
             if (method === 'matrix') renderMatrixTable();
+            if (method === 'bank') updateBankFilterTopics();
         }
 
         // --- QUẢN LÝ DANH SÁCH LỚP ĐỘNG ---
