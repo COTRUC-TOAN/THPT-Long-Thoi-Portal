@@ -2299,7 +2299,19 @@ function joinKahootArena() {
             setTimeout(() => { kahootCurrentIndex++; loadKahootQuestion(); }, 2000);
         }
 
-        fetchData();
+       if (currentTeacherId && TEACHERS_DIRECTORY[currentTeacherId] && getTeacherScriptUrl(currentTeacherId)) {
+            SCRIPT_URL = getTeacherScriptUrl(currentTeacherId);
+            const gate = document.getElementById('teacher-portal-gate');
+            if (gate) gate.style.display = 'none';
+            const brandEl = document.querySelector('.navbar .brand');
+            if (brandEl) {
+                brandEl.innerHTML = `<i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> ${TEACHERS_DIRECTORY[currentTeacherId].name.toUpperCase()} - ${TEACHERS_DIRECTORY[currentTeacherId].subject.toUpperCase()}`;
+            }
+            fetchData();
+        } else {
+            const gate = document.getElementById('teacher-portal-gate');
+            if (gate) gate.style.display = 'flex';
+        }
         
         function openChangePassModal() {
     const modal = document.getElementById('change-pass-modal');
