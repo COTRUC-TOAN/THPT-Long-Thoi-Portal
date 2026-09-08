@@ -1799,6 +1799,30 @@ function clearSelectedQuestions() {
     filterQuestionBankList();
     updateSelectedItemsDisplay();
 }
+        function updateBankFilterTopics() {
+    const gradeSelect = document.getElementById('bank-filter-grade');
+    const grade = gradeSelect ? gradeSelect.value : 'all';
+    const select = document.getElementById('bank-filter-topic');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="all">-- Bài / Chương --</option>';
+    
+    let list = [];
+    if (typeof getTopicsForGrade === 'function' && grade !== 'all') {
+        list = getTopicsForGrade(grade);
+    } else {
+        list = [...(topicsConfig.g12 || []), ...(topicsConfig.g11 || []), ...(topicsConfig.g10 || [])];
+    }
+    
+    list.forEach(t => {
+        if (t && t.type !== 'header' && t.id) {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            select.appendChild(opt);
+        }
+    });
+}
 function getQuestionCount(top, type, levelNum) {
     if (typeof questionBank === 'undefined' || !Array.isArray(questionBank) || questionBank.length === 0) return 0;
     
