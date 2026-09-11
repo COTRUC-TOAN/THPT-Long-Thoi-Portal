@@ -1675,9 +1675,9 @@ function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n');
 
-    let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.\-_])/i)
+  let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.])/i)
         .map(b => b.trim())
-        .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+/i.test(b));
+        .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]/i.test(b));
 
     blocks.forEach((block, idx) => {
         let lines = block.split('\n').map(l => l.trim()).filter(l => l !== '');
