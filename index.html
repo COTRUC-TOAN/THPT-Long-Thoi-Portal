@@ -112,8 +112,13 @@
         .form-row { margin-bottom: 12px; }
         .form-row label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 1.05rem; color: #334155; }
         .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.05rem; outline: none; background: #fff; font-family: 'Times New Roman', Times, serif; }
-     .rich-textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.15rem; outline: none; background: #fff; overflow-y: auto; overflow-x: hidden; font-family: 'Times New Roman', Times, serif; line-height: 1.6; }
-.rich-textarea * { max-width: 100% !important; width: auto !important; white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important; }
+   .rich-textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.15rem; outline: none; background: #fff; overflow-y: auto; overflow-x: auto; font-family: 'Times New Roman', Times, serif; line-height: 1.6; }
+.rich-textarea * { max-width: 100% !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }
+/* Xóa bỏ lùi lề âm của Word gây lẹm chữ bên trái */
+.rich-textarea p, .rich-textarea div, .rich-textarea span { margin-left: 0 !important; text-indent: 0 !important; padding-left: 0 !important; white-space: normal !important; }
+/* Ép bảng biểu (table) của Word phải vừa khít khung 100% */
+.rich-textarea table { width: 100% !important; table-layout: fixed !important; margin: 10px 0 !important; border-collapse: collapse !important; }
+.rich-textarea td, .rich-textarea th { white-space: normal !important; border: 1px solid #cbd5e1 !important; padding: 6px !important; }
 .preview-box { background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 12px; margin-top: 12px; min-height: 80px; font-size: 1.05rem; line-height: 1.5; color: #1e293b; overflow-y: auto; }
         .parsed-q-preview-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 10px; line-height: 1.5; }
         .parsed-q-preview-card strong { color: #1e40af; }
