@@ -2017,76 +2017,103 @@ function toggleExamPasswordField() {
                 }
             });
         }
-        function loadKahootQuestion() {
-            const qList = activeExam.questions || [];
-            if (kahootCurrentIndex >= qList.length) {
-                playSound('correct'); stopKahootMusicLoop();
-                document.getElementById('kahoot-game-box').innerHTML = `<h2 style="color: #7c3aed;"><i class="fa-solid fa-trophy"></i> Hoàn Thành Đấu Trường!</h2><h3>Tổng điểm: ${kahootScore}</h3>`;
-                return;
-            }
-            const q = qList[kahootCurrentIndex];
-            document.getElementById('kahoot-q-text').innerHTML = `Câu ${kahootCurrentIndex + 1} [${q.type}]: ${q.q}`;
-            document.getElementById('kahoot-feedback').innerText = '';
-            let btnHtml = '';
-            if (q.type === 'MCQ' && q.options) {
-                btnHtml = q.options.map((opt, i) => opt ? `<button class="kahoot-opt-btn k-opt-${i}" onclick="answerKahoot('${['A','B','C','D'][i]}', '${q.ans}', this)">${['A','B','C','D'][i]}. ${opt}</button>` : '').join('');
-            } else {
-                btnHtml = `<input type="text" id="k-ans" class="form-input" placeholder="Nhập kết quả..." style="font-size:1.2rem; text-align:center;"><button class="btn-start" style="width:100%; background:#2563eb;" onclick="answerKahoot(document.getElementById('k-ans').value, '${q.ans}', this)">Gửi Đáp Án</button>`;
-            }
-            document.getElementById('kahoot-options-grid').innerHTML = btnHtml;
-            renderMath(document.getElementById('kahoot-game-box'));
+       function loadKahootQuestion() {
+    const qList = activeExam.questions || [];
+    if (kahootCurrentIndex >= qList.length) {
+        playSound('correct'); 
+        stopKahootMusicLoop();
+        document.getElementById('kahoot-game-box').innerHTML = `
+            <div style="padding: 30px; text-align: center;">
+                <h2 style="color: #7c3aed; font-size: 2rem;"><i class="fa-solid fa-trophy"></i> HOÀN THÀNH ĐẤU TRƯỜNG!</h2>
+                <h3 style="margin-top: 15px; font-size: 1.5rem;">Tổng điểm: <span style="color: #ea580c;">${kahootScore}</span></h3>
+            </div>`;
+        return;
+    }
 
-            kahootTimeLeft = parseInt(activeExam.timeLimit) || 30;
-            document.getElementById('kahoot-timer-display').innerText = kahootTimeLeft;
-            clearInterval(kahootTimer);
-            kahootTimer = setInterval(() => {
-                kahootTimeLeft--;
-                document.getElementById('kahoot-timer-display').innerText = kahootTimeLeft;
-                if (kahootTimeLeft <= 0) {
-                    clearInterval(kahootTimer);
-                    document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #dc2626;">⏰ Hết giờ!</span>`;
-                    setTimeout(() => { kahootCurrentIndex++; loadKahootQuestion(); }, 1200);
-                }
-            }, 1000);
+    const q = qList[kahootCurrentIndex];
+    document.getElementById('kahoot-q-text').innerHTML = `Câu ${kahootCurrentIndex + 1}: ${q.q}`;
+    document.getElementById('kahoot-feedback').innerText = '';
+
+    let btnHtml = '';
+    if (q.type === 'MCQ' && q.options) {
+        btnHtml = q.options.map((opt, i) => opt ? `<button class="kahoot-opt-btn k-opt-${i}" onclick="answerKahoot('${['A','B','C','D'][i]}', '${q.ans}', this)">${['A','B','C','D'][i]}. ${opt}</button>` : '').join('');
+    } else {
+        btnHtml = `
+            <div style="grid-column: 1/-1;">
+                <input type="text" id="k-ans" class="form-input" placeholder="Nhập câu trả lời..." style="font-size: 1.2rem; text-align: center; margin-bottom: 12px;">
+                <button class="btn-start" style="width: 100%; background: #2563eb; justify-content: center;" onclick="answerKahoot(document.getElementById('k-ans').value, '${q.ans}', this)">Gửi Kết Quả</button>
+            </div>`;
+    }
+    document.getElementById('kahoot-options-grid').innerHTML = btnHtml;
+    renderMath(document.getElementById('kahoot-game-box'));
+
+    kahootTimeLeft = parseInt(q.timeLimit) || parseInt(activeExam.timeLimit) || 20;
+    const timerCircle = document.getElementById('kahoot-timer-display');
+    if (timerCircle) timerCircle.innerText = kahootTimeLeft;
+
+    clearInterval(kahootTimer);
+    kahootTimer = setInterval(() => {
+        kahootTimeLeft--;
+        if (timerCircle) timerCircle.innerText = kahootTimeLeft;
+
+        if (kahootTimeLeft <= 5 && kahootTimeLeft > 0) {
+            playSound('tick');
         }
-        function answerKahoot(selected, correct, btnEl) {
+
+        if (kahootTimeLeft <= 0) {
+            clearInterval(kahootTimer);
+            if (timerCircle) timerCircle.innerText = '0';
+            document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #dc2626;">⏰ Đã hết thời gian! Đáp án đúng: ${q.ans}</span>`;
+
+            recordWrongAnswer(q);
+
+            setTimeout(() => { 
+                kahootCurrentIndex++; 
+                loadKahootQuestion(); 
+            }, 1500);
+        }
+    }, 1000);
+}
+       function recordWrongAnswer(q) {
+    if (!activeExam || !q) return;
+    const qIdClean = (q.id || `Cau_${kahootCurrentIndex + 1}`).replace(/[/.#$\[\]]/g, "_");
+    const wrongRef = db.ref(`kahoot_rooms/${activeExam.id}/wrong_answers/${qIdClean}`);
+
+    wrongRef.transaction(currentData => {
+        if (!currentData) {
+            return {
+                questionText: `Câu ${kahootCurrentIndex + 1}: ${q.q ? q.q.substring(0, 45) + '...' : ''}`,
+                wrongCount: 1,
+                students: [kahootStdName || 'Học sinh']
+            };
+        } else {
+            currentData.wrongCount = (currentData.wrongCount || 0) + 1;
+            if (!currentData.students) currentData.students = [];
+            if (kahootStdName && !currentData.students.includes(kahootStdName)) {
+                currentData.students.push(kahootStdName);
+            }
+            return currentData;
+        }
+    });
+}
+
+function answerKahoot(selected, correct, btnEl) {
     clearInterval(kahootTimer);
     const qList = activeExam.questions || [];
     const q = qList[kahootCurrentIndex];
 
     let isCorrect = selected.toString().trim().toUpperCase().replace(/[^A-Z0-9]/g,'') === String(correct).trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-    
+
     if (isCorrect) {
         kahootScore += 250 + (kahootTimeLeft * 15); 
         playSound('correct');
-        document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #16a34a;">🎉 Chính xác! (+${250 + (kahootTimeLeft * 15)})</span>`;
+        document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #16a34a;">🎉 Chính xác!</span>`;
     } else {
         playSound('wrong');
-        document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #dc2626;">❌ Sai rồi! Đáp án đúng: ${correct}</span>`;
-
-        // Ghi nhận câu sai lên Firebase
-        const qIdClean = (q.id || `Cau_${kahootCurrentIndex + 1}`).replace(/[/.#$\[\]]/g, "_");
-        const wrongRef = db.ref(`kahoot_rooms/${activeExam.id}/wrong_answers/${qIdClean}`);
-        
-        wrongRef.transaction(currentData => {
-            if (!currentData) {
-                return {
-                    questionText: `Câu ${kahootCurrentIndex + 1} (${q.type})`,
-                    wrongCount: 1,
-                    students: [kahootStdName]
-                };
-            } else {
-                currentData.wrongCount = (currentData.wrongCount || 0) + 1;
-                if (!currentData.students) currentData.students = [];
-                if (!currentData.students.includes(kahootStdName)) {
-                    currentData.students.push(kahootStdName);
-                }
-                return currentData;
-            }
-        });
+        document.getElementById('kahoot-feedback').innerHTML = `<span style="color: #dc2626;">❌ Sai rồi! Đáp án: ${correct}</span>`;
+        recordWrongAnswer(q);
     }
 
-    // Cập nhật điểm của học sinh lên Firebase để Top 3 nhảy múa tức thì
     const cleanName = kahootStdName.replace(/[/.#$\[\]]/g, "_");
     db.ref('kahoot_rooms/' + activeExam.id + '/scores/' + cleanName).set({ 
         name: kahootStdName, 
