@@ -662,28 +662,27 @@
         // MỤC LỤC & CHUYÊN MỤC ĐỘNG TỪ GOOGLE SHEETS
         let topicsConfig = { general: [], g12: [], g11: [], g10: [] };
 
-       function processTopicsData(rawTopics) {
+     function processTopicsData(rawTopics) {
     topicsConfig = { general: [], g12: [], g11: [], g10: [] };
     if (!rawTopics || !Array.isArray(rawTopics)) return;
 
     rawTopics.forEach(item => {
         let khoiStr = String(item.khoi || "").trim();
         let topicType = String(item.type || "").trim().toLowerCase();
-        
-        // Tự động tìm đúng tên bài: nếu name bị dính chữ "header"/"item" thì lấy cột id hoặc name chuẩn
-        let titleOrName = item.name;
-        if (titleOrName === "header" || titleOrName === "item") {
-            titleOrName = item.id || item.name;
-        }
+        let topicName = String(item.name || "").trim();
+        let topicId = String(item.id || "").trim();
+        let topicIcon = String(item.icon || "fa-book").trim();
+
+        if (!topicName) return;
 
         let topicObj = {};
-        if (topicType === 'header' || String(item.name).toLowerCase() === 'header') {
-            topicObj = { type: 'header', title: titleOrName };
+        if (topicType === 'header') {
+            topicObj = { type: 'header', title: topicName };
         } else {
             topicObj = { 
-                id: item.id, 
-                name: titleOrName, 
-                icon: item.icon && item.icon.startsWith('fa-') ? item.icon : 'fa-book' 
+                id: topicId || topicName, 
+                name: topicName, 
+                icon: topicIcon.startsWith('fa-') ? topicIcon : 'fa-book' 
             };
         }
 
