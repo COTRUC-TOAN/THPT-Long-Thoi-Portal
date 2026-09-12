@@ -942,53 +942,73 @@
             return parsedArr;
         }
 
-        function parseDirectExam() {
-            const rawHtml = document.getElementById('direct-raw-text').innerHTML.trim();
-            if (!rawHtml) { alert("Vui lòng dán văn bản đề thi!"); return; }
-            
-            const currentGradeVal = document.getElementById('new-exam-grade').value;
-            const currentTopicVal = document.getElementById('new-exam-topic').value;
+     function parseDirectExam() {
+    const rawHtml = document.getElementById('direct-raw-text').innerHTML.trim();
+    if (!rawHtml) { alert("Vui lòng dán văn bản đề thi!"); return; }
+    
+    const currentGradeVal = document.getElementById('new-exam-grade').value;
+    const currentTopicVal = document.getElementById('new-exam-topic').value;
+    const currentMode = document.getElementById('new-exam-mode').value;
+    const isKahoot = (currentMode === 'KAHOOT');
 
-            directParsedQuestions = parseTextToQuestionsAllInOne(rawHtml, currentGradeVal, currentTopicVal);
-            document.getElementById('direct-parsed-count').innerText = directParsedQuestions.length;
-            
-            let previewHtml = directParsedQuestions.map((q, i) => {
-                let optsHtml = '';
-                if (q.type === 'TF') {
-                    optsHtml = q.options.map((op, idx) => op ? `<div>${['a','b','c','d'][idx]}) ${op}</div>` : '').join('');
-                } else if (q.type === 'MCQ') {
-                    optsHtml = `<div style="display:grid; grid-template-columns:1fr 1fr;">` + q.options.map((op, idx) => op ? `<div>${['A','B','C','D'][idx]}. ${op}</div>` : '').join('') + `</div>`;
-                }
-                let expPreviewHtml = q.explanation ? `<div style="margin-top: 6px; padding: 6px; background: #f0fdf4; border-left: 3px solid #16a34a; font-size: 0.95rem; color: #166534;"><strong>Lời giải:</strong> ${q.explanation}</div>` : '';
+    directParsedQuestions = parseTextToQuestionsAllInOne(rawHtml, currentGradeVal, currentTopicVal);
+    document.getElementById('direct-parsed-count').innerText = directParsedQuestions.length;
+    
+    let previewHtml = directParsedQuestions.map((q, i) => {
+        if (!q.timeLimit) q.timeLimit = 30; // Mặc định 30 giây cho Kahoot
 
-                return `<div class="parsed-q-preview-card" style="border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 8px; background: #fff;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <strong>C${i+1} [${q.type}]</strong>
-                        <div>
-                            <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Mức độ:</label>
-                            <select class="form-input" style="padding: 2px 6px; font-size: 0.9rem; display: inline-block; width: auto;" onchange="directParsedQuestions[${i}].level = this.value">
-                                <option value="NB" ${q.level === 'NB' ? 'selected' : ''}>NB</option>
-                                <option value="TH" ${q.level === 'TH' ? 'selected' : ''}>TH</option>
-                                <option value="VD" ${q.level === 'VD' ? 'selected' : ''}>VD</option>
-                                <option value="VDC" ${q.level === 'VDC' ? 'selected' : ''}>VDC</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 6px;">${q.q}</div>
-                    <div style="color: #475569; margin: 4px 0;">${optsHtml}</div>
-                    <div style="color:#16a34a; font-weight:bold; margin-top: 4px;">Đ/A: ${q.ans}</div>
-                    ${expPreviewHtml}
-                </div>`;
-            }).join('');
-            
-            document.getElementById('direct-preview-box').innerHTML = previewHtml;
-            document.getElementById('btn-save-parsed-bank').style.display = 'inline-block';
-            renderMath(document.getElementById('direct-preview-box'));
-
-            selectedQuestions = [...directParsedQuestions];
-            selectedQuestions.forEach(q => { if (!q.timeLimit) q.timeLimit = 30; });
-            updateSelectedItemsDisplay();
+        let optsHtml = '';
+        if (q.type === 'TF') {
+            optsHtml = q.options.map((op, idx) => op ? `<div>${['a','b','c','d'][idx]}) ${op}</div>` : '').join('');
+        } else if (q.type === 'MCQ') {
+            optsHtml = `<div style="display:grid; grid-template-columns:1fr 1fr;">` + q.options.map((op, idx) => op ? `<div>${['A','B','C','D'][idx]}. ${op}</div>` : '').join('') + `</div>`;
         }
+        let expPreviewHtml = q.explanation ? `<div style="margin-top: 6px; padding: 6px; background: #f0fdf4; border-left: 3px solid #16a34a; font-size: 0.95rem; color: #166534;"><strong>Lời giải:</strong> ${q.explanation}</div>` : '';
+
+        // CHỈ HIỆN Ô THỜI GIAN KHI LÀ KAHOOT
+        let timeSelectHtml = isKahoot ? `
+            <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;">
+                <label style="font-size: 0.85rem; font-weight: bold; color: #7c3aed;"><i class="fa-regular fa-clock"></i> Thời gian:</label>
+                <select class="form-input" style="padding: 2px 6px; font-size: 0.85rem; display: inline-block; width: auto; font-weight: bold; color: #7c3aed;" onchange="directParsedQuestions[${i}].timeLimit = parseInt(this.value); if(selectedQuestions[${i}]) selectedQuestions[${i}].timeLimit = parseInt(this.value);">
+                    <option value="15" ${q.timeLimit == 15 ? 'selected' : ''}>15s</option>
+                    <option value="20" ${q.timeLimit == 20 ? 'selected' : ''}>20s</option>
+                    <option value="30" ${q.timeLimit == 30 ? 'selected' : ''}>30s</option>
+                    <option value="45" ${q.timeLimit == 45 ? 'selected' : ''}>45s</option>
+                    <option value="60" ${q.timeLimit == 60 ? 'selected' : ''}>60s</option>
+                    <option value="90" ${q.timeLimit == 90 ? 'selected' : ''}>90s</option>
+                    <option value="120" ${q.timeLimit == 120 ? 'selected' : ''}>120s</option>
+                </select>
+            </div>
+        ` : '';
+
+        return `<div class="parsed-q-preview-card" style="border: 1px solid #cbd5e1; padding: 12px; margin-bottom: 10px; border-radius: 8px; background: #fff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                <strong>C${i+1} [${q.type}]</strong>
+                <div style="display: flex; align-items: center;">
+                    <label style="font-size: 0.85rem; font-weight: bold; color: #475569;">Mức độ:</label>
+                    <select class="form-input" style="padding: 2px 6px; font-size: 0.85rem; display: inline-block; width: auto; margin-left: 4px;" onchange="directParsedQuestions[${i}].level = this.value">
+                        <option value="NB" ${q.level === 'NB' ? 'selected' : ''}>NB</option>
+                        <option value="TH" ${q.level === 'TH' ? 'selected' : ''}>TH</option>
+                        <option value="VD" ${q.level === 'VD' ? 'selected' : ''}>VD</option>
+                        <option value="VDC" ${q.level === 'VDC' ? 'selected' : ''}>VDC</option>
+                    </select>
+                    ${timeSelectHtml}
+                </div>
+            </div>
+            <div style="margin-bottom: 6px;">${q.q}</div>
+            <div style="color: #475569; margin: 4px 0;">${optsHtml}</div>
+            <div style="color:#16a34a; font-weight:bold; margin-top: 4px;">Đ/A: ${q.ans}</div>
+            ${expPreviewHtml}
+        </div>`;
+    }).join('');
+    
+    document.getElementById('direct-preview-box').innerHTML = previewHtml;
+    document.getElementById('btn-save-parsed-bank').style.display = 'inline-block';
+    renderMath(document.getElementById('direct-preview-box'));
+
+    selectedQuestions = [...directParsedQuestions];
+    updateSelectedItemsDisplay();
+}
 
         async function saveBankBulkToSheets() {
             if (directParsedQuestions.length === 0) return;
