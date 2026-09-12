@@ -1612,12 +1612,17 @@ function renderScoresTable() {
                 alert("Lỗi kết nối máy chủ!");
             }
         }
-
-        function toggleExamPasswordField() {
-            const mode = document.getElementById("new-exam-mode").value;
-            document.getElementById("exam-password-row").style.display = (mode === "KIEMTRA") ? "block" : "none";
-            document.getElementById("lecture-fields").style.display = (mode === "BAIGIANG") ? "block" : "none";
-        }
+function toggleExamPasswordField() {
+    const mode = document.getElementById("new-exam-mode").value;
+    document.getElementById("exam-password-row").style.display = (mode === "KIEMTRA") ? "block" : "none";
+    document.getElementById("lecture-fields").style.display = (mode === "BAIGIANG") ? "block" : "none";
+    
+    // Tự làm mới danh sách xem trước để bật/tắt ô chọn giây
+    if (directParsedQuestions && directParsedQuestions.length > 0) {
+        parseDirectExam();
+    }
+}
+      
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
