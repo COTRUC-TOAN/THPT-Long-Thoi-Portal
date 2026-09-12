@@ -1634,16 +1634,39 @@ function toggleExamPasswordField() {
 
         // LÀM BÀI TRUYỀN THỐNG
         let processedQuestions = []; let timerInterval = null; let secondsRemaining = 0; let cheatWarnings = 0;
-        function startExam(id) {
-            activeExam = examBank.find(e => e.id === id);
-            if (!activeExam) return;
-            if (activeExam.mode === 'BAIGIANG') { startLectureMode(); return; }
-            document.getElementById('portal-view').style.display = 'none';
-            if (activeExam.mode === 'KAHOOT') { startHostMode(); }
-            else if (activeExam.mode === 'KIEMTRA' && activeExam.examPass) {
-                document.getElementById('password-lock-screen').style.display = 'block';
-            } else { startTraditionalExamMode(); }
+      function startExam(id) {
+    activeExam = examBank.find(e => e.id === id);
+    if (!activeExam) return;
+    
+    // Nếu là Bài Giảng
+    if (activeExam.mode === 'BAIGIANG') { 
+        startLectureMode(); 
+        return; 
+    }
+    
+    document.getElementById('portal-view').style.display = 'none';
+
+    // Nếu là Kahoot
+    if (activeExam.mode === 'KAHOOT') {
+        const isStudentLink = new URLSearchParams(window.location.search).get('exam');
+        
+        // Nếu mở từ link gửi học sinh: hiển thị màn hình Đăng ký thi
+        // Nếu giáo viên bấm trực tiếp từ cổng quản lý: vào màn hình Điều khiển máy chủ
+        if (isStudentLink && !teacherPassAuth) {
+            startStudentKahootMode();
+        } else {
+            startHostMode();
         }
+        return;
+    }
+
+    // Các chế độ Kiểm Tra / Luyện Tập thông thường
+    if (activeExam.mode === 'KIEMTRA' && activeExam.examPass) {
+        document.getElementById('password-lock-screen').style.display = 'block';
+    } else { 
+        startTraditionalExamMode(); 
+    }
+}
 
         function verifyExamPassword() {
             const enteredPass = document.getElementById('exam-secure-pass').value.trim();
