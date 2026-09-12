@@ -1634,37 +1634,43 @@ function toggleExamPasswordField() {
 
         // LÀM BÀI TRUYỀN THỐNG
         let processedQuestions = []; let timerInterval = null; let secondsRemaining = 0; let cheatWarnings = 0;
-      function startExam(id) {
+    function startExam(id) {
     activeExam = examBank.find(e => e.id === id);
     if (!activeExam) return;
-    
-    // Nếu là Bài Giảng
-    if (activeExam.mode === 'BAIGIANG') { 
-        startLectureMode(); 
-        return; 
+
+    if (activeExam.mode === 'BAIGIANG') {
+        startLectureMode();
+        return;
     }
-    
+
     document.getElementById('portal-view').style.display = 'none';
 
-    // Nếu là Kahoot
     if (activeExam.mode === 'KAHOOT') {
-        const isStudentLink = new URLSearchParams(window.location.search).get('exam');
-        
-        // Nếu mở từ link gửi học sinh: hiển thị màn hình Đăng ký thi
-        // Nếu giáo viên bấm trực tiếp từ cổng quản lý: vào màn hình Điều khiển máy chủ
-        if (isStudentLink && !teacherPassAuth) {
-            startStudentKahootMode();
+        const urlParams = new URLSearchParams(window.location.search);
+        const isFromStudentLink = urlParams.get('exam');
+
+        // Nếu mở từ đường link gửi học sinh (chưa đăng nhập pass giáo viên): vào giao diện Học Sinh
+        if (isFromStudentLink && !teacherPassAuth) {
+            document.getElementById('kahoot-view').style.display = 'block';
+            document.getElementById('kahoot-login-box').style.display = 'block';
+            document.getElementById('kahoot-host-box').style.display = 'none';
+            document.getElementById('kahoot-lobby-box').style.display = 'none';
+            document.getElementById('kahoot-game-box').style.display = 'none';
+            kahootCurrentIndex = 0;
+            kahootScore = 0;
+            document.getElementById('k-std-name').value = '';
+            document.getElementById('k-std-class').value = '';
         } else {
+            // Nếu là Giáo viên bấm: mở màn hình Điều khiển máy chủ
             startHostMode();
         }
         return;
     }
 
-    // Các chế độ Kiểm Tra / Luyện Tập thông thường
     if (activeExam.mode === 'KIEMTRA' && activeExam.examPass) {
         document.getElementById('password-lock-screen').style.display = 'block';
-    } else { 
-        startTraditionalExamMode(); 
+    } else {
+        startTraditionalExamMode();
     }
 }
 
