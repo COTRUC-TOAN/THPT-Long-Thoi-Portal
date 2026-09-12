@@ -154,8 +154,17 @@
         .student-chip { display: inline-block; background: #7c3aed; color: #fff; padding: 6px 14px; border-radius: 50px; font-weight: bold; margin: 4px; font-size: 1rem; }
         .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; font-weight: bold; transition: all 0.3s; }
         
-        @keyframes dance { 0% { transform: translateY(0px) rotate(-1deg); } 100% { transform: translateY(-6px) rotate(1deg); background: #f3e8ff; border-color: #a855f7; } }
-        .dancing-row { animation: dance 0.5s infinite alternate; font-size: 1.1rem !important; }
+      @keyframes kahootDance {
+    0% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-8px) scale(1.03); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25); }
+    100% { transform: translateY(0px) scale(1); }
+}
+
+.dancing-row {
+    animation: kahootDance 0.8s infinite ease-in-out !important;
+    font-weight: bold;
+    border-radius: 10px !important;
+}
         .wrong-stat-item { background: #fee2e2; border-left: 4px solid #dc2626; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; font-weight: bold; color: #991b1b; }
 
         .secure-exam-mode { user-select: none !important; -webkit-user-select: none !important; }
