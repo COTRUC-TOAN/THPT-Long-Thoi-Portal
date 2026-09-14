@@ -217,6 +217,23 @@ span.MathJax {
 span.MathJax .mfrac {
     padding: 0 2px !important;
 }
+        /* Chống ngắt dòng lung tung giữa công thức và chữ */
+.q-title, .kahoot-question, .parsed-q-preview-card {
+    line-height: 1.8 !important;
+    word-break: break-word;
+}
+
+/* Ép công thức Toán và các cặp số khoảng đoạn luôn nằm liền khối, không bị gãy nửa vời */
+span.MathJax {
+    white-space: nowrap !important;
+    display: inline-block !important;
+}
+
+/* Các đáp án trắc nghiệm không bị nhảy rớt chữ */
+.mcq-option, .tf-row {
+    line-height: 1.6 !important;
+    align-items: center;
+}
     </style>
 </head>
 <body>
