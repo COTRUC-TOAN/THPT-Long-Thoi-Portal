@@ -10,14 +10,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- MathJax -->
-    <script type="text/x-mathjax-config">
-        MathJax.Hub.Config({
-            tex2jax: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
-            TeX: { extensions: ["AMSmath.js", "AMSsymbols.js", "noUndefined.js"] },
-            "HTML-CSS": { scale: 100, linebreaks: { automatic: false } },
-            showProcessingMessages: false, messageStyle: "none"
-        });
-    </script>
+   <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        TeX: {
+            extensions: ["AMSmath.js", "AMSsymbols.js", "noUndefined.js"],
+            Macros: {
+                frac: ["\\dfrac{#1}{#2}", 2]
+            }
+        },
+        "HTML-CSS": {
+            scale: 105,
+            matchFontHeight: true,
+            availableFonts: ["TeX"],
+            linebreaks: { automatic: false }
+        },
+        SVG: {
+            scale: 105,
+            matchFontHeight: true
+        },
+        showProcessingMessages: false,
+        messageStyle: "none"
+    });
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS_HTML-full"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
@@ -183,6 +202,21 @@
         .explanation-box { background: #fff; border-left: 4px solid #16a34a; padding: 12px 16px; margin-top: 12px; border-radius: 4px; font-size: 1.05rem; color: #334155; line-height: 1.8; }
         .toast-msg { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: bold; z-index: 1000; display: none; }
         .q-card img, .preview-box img, .kahoot-question img { max-width: 100%; height: auto; border-radius: 8px; margin: 10px auto; display: block; border: 1px solid #e2e8f0; }
+        /* Tinh chỉnh hiển thị công thức MathJax hòa hợp với dòng chữ */
+.MathJax_Display {
+    margin: 0.8em 0 !important;
+}
+
+span.MathJax {
+    font-size: 105% !important;
+    padding: 0 3px !important; /* Tạo độ thở nhẹ giữa công thức và từ tiếng Việt */
+    outline: none !important;
+}
+
+/* Căn chỉnh phân số không bị cấn dòng */
+span.MathJax .mfrac {
+    padding: 0 2px !important;
+}
     </style>
 </head>
 <body>
