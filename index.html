@@ -844,113 +844,165 @@
             });
         }
 
-        // BÓC TÁCH CÂU HỎI THÔNG MINH
         function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
-            let parsedArr = [];
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = (rawHtml || '').normalize('NFC');
-           
-            let textContent = tempDiv.innerHTML
-                .replace(/<[ub]>([A-D])[\.\)]<\/[ub]>/gi, '$1.')
-                .replace(/<br\s*[\/]?>/gi, '\n')
-                .replace(/<\/?(div|p|h[1-6]|ul|ol|li|tr)[^>]*>/gi, '\n')
-                .replace(/<(?!img\b|\/img)[^>]*>/gi, '') 
-                .replace(/&nbsp;/gi, ' ')
-                .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    let parsedArr = [];
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = (rawHtml || '').normalize('NFC');
 
-            textContent = cleanLatexAndText(textContent);
-            textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
+    // 1. CÔ LẬP TOÀN BỘ THẺ ẢNH (Bảo vệ dữ liệu base64 không bị regex chữ cái A-D làm biến dạng)
+    let imageMap = [];
+    let imgNodes = tempDiv.querySelectorAll('img');
+    imgNodes.forEach((img, i) => {
+        let placeholder = `___IMG_HOLDER_${i}___`;
+        imageMap.push({ key: placeholder, html: img.outerHTML });
+        img.outerHTML = placeholder;
+    });
 
-            let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.])/i)
-                .map(b => b.trim())
-                .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]/i.test(b));
-           
-            blocks.forEach((block, idx) => {
-                let detectedType = 'SA';
-                let options = ['', '', '', ''];
-                let ans = '';
-                let ansOptions = [];
-                let explanation = '';
-                let qContent = '';
+    // 2. CHUẨN HÓA VĂN BẢN
+    let textContent = tempDiv.innerHTML
+        .replace(/<[ub]>([A-D])[\.\)]<\/[ub]>/gi, '$1.')
+        .replace(/<br\s*[\/]?>/gi, '\n')
+        .replace(/<\/?(div|p|h[1-6]|ul|ol|li|tr)[^>]*>/gi, '\n')
+        .replace(/<[^>]*>/gi, '') // Xóa sạch thẻ HTML thừa sau khi đã cất ảnh an toàn
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-                let expMatch = block.match(/(?:L[ờo]i\s*gi[ảa]i|H[ưướ]ng\s*dẫ?n|Lời\s*giải\s*chi\s*tiết)\s*[:\-]?\s*([\s\S]*)$/i);
-                if (expMatch) {
-                    explanation = expMatch[1].trim();
-                    block = block.replace(expMatch[0], '').trim();
-                }
+    textContent = cleanLatexAndText(textContent);
+    textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
 
-                let ansMatch = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([A-D]|[a-d\s,]+|[-0-9,\.]+)/i);
-                if (ansMatch) {
-                    ans = ansMatch[1].trim().toUpperCase();
-                    block = block.replace(ansMatch[0], '').trim();
-                }
+    // Chia từng block câu hỏi
+    let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.])/i)
+        .map(b => b.trim())
+        .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]/i.test(b));
 
-                if (block.search(/(?:^|\s)A[\.\)]/) !== -1 && block.search(/(?:^|\s)B[\.\)]/) !== -1) {
-                    detectedType = 'MCQ';
-                    let splitA = block.split(/(?:^|\s)A[\.\)]\s*/);
-                    qContent = splitA[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+    // Hàm trả ảnh về đúng chỗ sau khi xử lý xong văn bản
+    function restoreAllImages(str) {
+        if (!str) return '';
+        let result = str;
+        imageMap.forEach(item => {
+            result = result.split(item.key).join(item.html);
+        });
+        return result;
+    }
 
-                    let rest = "A. " + splitA.slice(1).join("A. ");
-                    let mOptA = rest.match(/A[\.\)]\s*([\s\S]*?)(?=(?:^|\s)B[\.\)]\s*)/i);
-                    let mOptB = rest.match(/B[\.\)]\s*([\s\S]*?)(?=(?:^|\s)C[\.\)]\s*)/i);
-                    let mOptC = rest.match(/C[\.\)]\s*([\s\S]*?)(?=(?:^|\s)D[\.\)]\s*)/i);
-                    let mOptD = rest.match(/D[\.\)]\s*([\s\S]*)$/i);
+    blocks.forEach((block, idx) => {
+        let detectedType = 'SA';
+        let options = ['', '', '', ''];
+        let ans = '';
+        let ansOptions = [];
+        let explanation = '';
+        let qContent = '';
 
-                    options[0] = mOptA ? mOptA[1].trim() : '';
-                    options[1] = mOptB ? mOptB[1].trim() : '';
-                    options[2] = mOptC ? mOptC[1].trim() : '';
-                    options[3] = mOptD ? mOptD[1].trim() : '';
-
-                    if (!ans) {
-                        if (rawHtml.includes('<u>A') || rawHtml.includes('underline">A')) ans = 'A';
-                        else if (rawHtml.includes('<u>B') || rawHtml.includes('underline">B')) ans = 'B';
-                        else if (rawHtml.includes('<u>C') || rawHtml.includes('underline">C')) ans = 'C';
-                        else if (rawHtml.includes('<u>D') || rawHtml.includes('underline">D')) ans = 'D';
-                        else ans = 'A';
-                    }
-                } else if (block.search(/(?:^|\s)a[\)\.]/) !== -1 && block.search(/(?:^|\s)b[\)\.]/) !== -1) {
-                    detectedType = 'TF';
-                    let split_a = block.split(/(?:^|\s)a[\)\.]\s*/);
-                    qContent = split_a[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
-
-                    let rest = "a) " + split_a.slice(1).join("a) ");
-                    let m_a = rest.match(/a[\)\.]\s*([\s\S]*?)(?=(?:^|\s)b[\)\.]\s*)/i);
-                    let m_b = rest.match(/b[\)\.]\s*([\s\S]*?)(?=(?:^|\s)c[\)\.]\s*)/i);
-                    let m_c = rest.match(/c[\)\.]\s*([\s\S]*?)(?=(?:^|\s)d[\)\.]\s*)/i);
-                    let m_d = rest.match(/d[\)\.]\s*([\s\S]*)$/i);
-
-                    options[0] = m_a ? m_a[1].trim() : '';
-                    options[1] = m_b ? m_b[1].trim() : '';
-                    options[2] = m_c ? m_c[1].trim() : '';
-                    options[3] = m_d ? m_d[1].trim() : '';
-
-                    ansOptions = ['D', 'S', 'D', 'S'];
-                    ans = 'DSDS';
-                } else {
-                    detectedType = 'SA';
-                    qContent = block.replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
-                }
-
-                const safeTopicId = (topic || 'Chung').replace(/[^a-zA-Z0-9-_]/g, '_');
-                const qId = `CH${grade}_${safeTopicId}_${Date.now().toString().slice(-4)}_${idx + 1}`;
-
-                parsedArr.push({
-                    id: qId,
-                    grade: String(grade), 
-                    topic: topic, 
-                    level: 'TH',
-                    type: detectedType,
-                    q: qContent.replace(/\n/g, '<br>'),
-                    options: options,
-                    ans: ans,
-                    ansOptions: ansOptions,
-                    explanation: explanation
-                });
-            });
-
-            return parsedArr;
+        // TÁCH LỜI GIẢI CHI TIẾT (NẾU CÓ)
+        let expMatch = block.match(/(?:L[ờo]i\s*gi[ảa]i|H[ưướ]ng\s*dẫ?n|Lời\s*giải\s*chi\s*tiết)\s*[:\-]?\s*([\s\S]*)$/i);
+        if (expMatch) {
+            explanation = expMatch[1].trim();
+            block = block.replace(expMatch[0], '').trim();
         }
 
+        // KIỂM TRA ĐỊNH DẠNG: ĐÚNG / SAI (TF)
+        let hasTfOptions = block.search(/(?:^|\s)a[\)\.]/) !== -1 && block.search(/(?:^|\s)b[\)\.]/) !== -1;
+
+        if (hasTfOptions) {
+            detectedType = 'TF';
+
+            // Nhận diện chuỗi đáp án Đúng/Sai (DDDS, D-S-D-S, ĐSĐS, Đ,Đ,Đ,S...)
+            let tfAnsMatch = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([DSĐSdđ\s,\.\-]+)/i);
+            if (tfAnsMatch) {
+                let cleanTF = tfAnsMatch[1].toUpperCase().replace(/Đ/g, 'D').replace(/[^DS]/g, '');
+                if (cleanTF.length >= 4) {
+                    ans = cleanTF.substring(0, 4);
+                }
+                block = block.replace(tfAnsMatch[0], '').trim();
+            }
+
+            let split_a = block.split(/(?:^|\s)a[\)\.]\s*/);
+            qContent = split_a[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+
+            let rest = "a) " + split_a.slice(1).join("a) ");
+            let m_a = rest.match(/a[\)\.]\s*([\s\S]*?)(?=(?:^|\s)b[\)\.]\s*)/i);
+            let m_b = rest.match(/b[\)\.]\s*([\s\S]*?)(?=(?:^|\s)c[\)\.]\s*)/i);
+            let m_c = rest.match(/c[\)\.]\s*([\s\S]*?)(?=(?:^|\s)d[\)\.]\s*)/i);
+            let m_d = rest.match(/d[\)\.]\s*([\s\S]*)$/i);
+
+            options[0] = m_a ? m_a[1].trim() : '';
+            options[1] = m_b ? m_b[1].trim() : '';
+            options[2] = m_c ? m_c[1].trim() : '';
+            options[3] = m_d ? m_d[1].trim() : '';
+
+            // Cắt sạch tàn dư dòng đáp án nếu còn nằm ở cuối ý d
+            options[3] = options[3].replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*.*$/i, '').trim();
+
+            if (!ans || ans.length !== 4) ans = 'DDDS';
+            ansOptions = ans.split('');
+        } 
+        // KIỂM TRA ĐỊNH DẠNG: TRẮC NGHIỆM (MCQ)
+        else if (block.search(/(?:^|\s)A[\.\)]/) !== -1 && block.search(/(?:^|\s)B[\.\)]/) !== -1) {
+            detectedType = 'MCQ';
+
+            // Nhận diện đáp án A, B, C, D độc lập ở cuối
+            let ansMatch = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([A-D])\b/i);
+            if (ansMatch) {
+                ans = ansMatch[1].trim().toUpperCase();
+                block = block.replace(ansMatch[0], '').trim();
+            }
+
+            let splitA = block.split(/(?:^|\s)A[\.\)]\s*/);
+            qContent = splitA[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+
+            let rest = "A. " + splitA.slice(1).join("A. ");
+            let mOptA = rest.match(/A[\.\)]\s*([\s\S]*?)(?=(?:^|\s)B[\.\)]\s*)/i);
+            let mOptB = rest.match(/B[\.\)]\s*([\s\S]*?)(?=(?:^|\s)C[\.\)]\s*)/i);
+            let mOptC = rest.match(/C[\.\)]\s*([\s\S]*?)(?=(?:^|\s)D[\.\)]\s*)/i);
+            let mOptD = rest.match(/D[\.\)]\s*([\s\S]*)$/i);
+
+            options[0] = mOptA ? mOptA[1].trim() : '';
+            options[1] = mOptB ? mOptB[1].trim() : '';
+            options[2] = mOptC ? mOptC[1].trim() : '';
+            options[3] = mOptD ? mOptD[1].trim() : '';
+
+            options[3] = options[3].replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*[A-D]?\s*$/i, '').trim();
+
+            if (!ans) {
+                if (rawHtml.includes('<u>A') || rawHtml.includes('underline">A')) ans = 'A';
+                else if (rawHtml.includes('<u>B') || rawHtml.includes('underline">B')) ans = 'B';
+                else if (rawHtml.includes('<u>C') || rawHtml.includes('underline">C')) ans = 'C';
+                else if (rawHtml.includes('<u>D') || rawHtml.includes('underline">D')) ans = 'D';
+                else ans = 'A';
+            }
+        } 
+        // CÂU HỎI TRẢ LỜI NGẮN (SA)
+        else {
+            detectedType = 'SA';
+            let ansGeneral = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([A-Za-z0-9,\.\-]+)/i);
+            if (ansGeneral) {
+                ans = ansGeneral[1].trim();
+                block = block.replace(ansGeneral[0], '').trim();
+            }
+            qContent = block.replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+            qContent = qContent.replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*.*$/i, '').trim();
+        }
+
+        const safeTopicId = (topic || 'Chung').replace(/[^a-zA-Z0-9-_]/g, '_');
+        const qId = `CH${grade}_${safeTopicId}_${Date.now().toString().slice(-4)}_${idx + 1}`;
+
+        // KHÔI PHỤC THẺ ẢNH NGUYÊN VẸN CHO TỪNG THÀNH PHẦN
+        parsedArr.push({
+            id: qId,
+            grade: String(grade),
+            topic: topic,
+            level: 'TH',
+            type: detectedType,
+            q: restoreAllImages(qContent).replace(/\n/g, '<br>'),
+            options: options.map(opt => restoreAllImages(opt)),
+            ans: ans,
+            ansOptions: ansOptions,
+            explanation: restoreAllImages(explanation)
+        });
+    });
+
+    return parsedArr;
+}
      function parseDirectExam() {
     const rawHtml = document.getElementById('direct-raw-text').innerHTML.trim();
     if (!rawHtml) { alert("Vui lòng dán văn bản đề thi!"); return; }
