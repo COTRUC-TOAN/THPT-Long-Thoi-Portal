@@ -745,13 +745,15 @@
             renderSidebarTopics(); renderExams();
         }
 
-        function cleanLatexAndText(str) {
-            if (!str) return '';
-            return str
-                .replace(/\\\[/g, '$').replace(/\\\]/g, '$')
-                .replace(/\\\(/g, '$').replace(/\\\)/g, '$')
-                .replace(/\$\s+/g, '$').replace(/\s+\$/g, '$');
-        }
+    function cleanLatexAndText(str) {
+    if (!str) return '';
+    return str
+        .replace(/\\\[/g, '$').replace(/\\\]/g, '$')
+        .replace(/\\\(/g, '$').replace(/\\\)/g, '$')
+        // Tự động đệm 1 khoảng trắng trước và sau công thức để không bị dính chữ
+        .replace(/([^\s\$])\$/g, '$1 $')
+        .replace(/\$([^\s\$])/g, '$ $1');
+}
 
         function renderMath(targetElement) {
             if (window.MathJax && MathJax.Hub && MathJax.Hub.Queue) { 
