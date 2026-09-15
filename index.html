@@ -2221,8 +2221,22 @@ function answerKahoot(selected, correct, btnEl) {
             toggleExamPasswordField();
         });
 
-        // KHỞI CHẠY HỆ THỐNG
-        if (currentTeacherId && TEACHERS_DIRECTORY[currentTeacherId] && getTeacherScriptUrl(currentTeacherId)) {
+       // KHỞI CHẠY HỆ THỐNG
+        const urlParamsCheck = new URLSearchParams(window.location.search);
+        const hasExamParam = urlParamsCheck.get('exam');
+
+        // NẾU LÀ ĐƯỜNG LINK HỌC SINH LÀM BÀI: LUÔN ẨN MÀN HÌNH CHẶN VÀ VÀO THI NGAY
+        if (hasExamParam) {
+            const gate = document.getElementById('teacher-portal-gate');
+            if (gate) gate.style.display = 'none';
+            // Dùng script mặc định nếu chưa chọn giáo viên
+            if (!SCRIPT_URL) {
+                SCRIPT_URL = TEACHERS_DIRECTORY['trucnt'].defaultUrl;
+            }
+            fetchData();
+        } 
+        // NẾU VÀO TRANG CHỦ BÌNH THƯỜNG
+        else if (currentTeacherId && TEACHERS_DIRECTORY[currentTeacherId] && getTeacherScriptUrl(currentTeacherId)) {
             SCRIPT_URL = getTeacherScriptUrl(currentTeacherId);
             const gate = document.getElementById('teacher-portal-gate');
             if (gate) gate.style.display = 'none';
@@ -2234,7 +2248,6 @@ function answerKahoot(selected, correct, btnEl) {
         } else {
             const gate = document.getElementById('teacher-portal-gate');
             if (gate) gate.style.display = 'flex';
-        }
-    </script>
+        }    </script>
 </body>
 </html>
