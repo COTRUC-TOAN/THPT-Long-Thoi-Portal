@@ -1839,7 +1839,7 @@ function toggleExamPasswordField() {
                     let opts = '';
                     ['A', 'B', 'C', 'D'].forEach((ch, idx) => {
                         let optText = q.options && q.options[idx] ? q.options[idx] : '';
-                        opts += `<label class="mcq-option"><input type="radio" name="q_${qGlobalIdx}" value="${ch}" required><span><strong>${ch}.</strong> ${optText}</span></label>`;
+                        opts += `<label class="mcq-option"><input type="radio" name="q_${qGlobalIdx}" value="${ch}" ><span><strong>${ch}.</strong> ${optText}</span></label>`;
                     });
                     container.innerHTML += `<div class="q-card" id="card_q_${qGlobalIdx}"><div class="q-title">Câu ${qGlobalIdx}: ${q.q}</div>${opts}<div class="explanation-box" id="exp_q_${qGlobalIdx}" style="display: none;"></div></div>`;
                 });
@@ -1851,7 +1851,7 @@ function toggleExamPasswordField() {
                     let rows = '';
                     ['a', 'b', 'c', 'd'].forEach((ch, idx) => {
                         if (q.options && q.options[idx]) {
-                            rows += `<div class="tf-row"><span><strong>${ch})</strong> ${q.options[idx]}</span><div class="tf-btns"><label><input type="radio" name="q_${qGlobalIdx}_${ch}" value="D" required> Đúng</label><label><input type="radio" name="q_${qGlobalIdx}_${ch}" value="S" required> Sai</label></div></div>`;
+                            rows += `<div class="tf-row"><span><strong>${ch})</strong> ${q.options[idx]}</span><div class="tf-btns"><label><input type="radio" name="q_${qGlobalIdx}_${ch}" value="D" > Đúng</label><label><input type="radio" name="q_${qGlobalIdx}_${ch}" value="S" > Sai</label></div></div>`;
                         }
                     });
                     container.innerHTML += `<div class="q-card" id="card_q_${qGlobalIdx}"><div class="q-title">Câu ${qGlobalIdx}: ${q.q}</div>${rows}<div class="explanation-box" id="exp_q_${qGlobalIdx}" style="display: none;"></div></div>`;
@@ -1861,7 +1861,7 @@ function toggleExamPasswordField() {
                 container.innerHTML += `<div class="section-header">🔷 PHẦN III: TRẢ LỜI NGẮN</div>`;
                 p3.forEach(q => {
                     qGlobalIdx++;
-                    container.innerHTML += `<div class="q-card" id="card_q_${qGlobalIdx}"><div class="q-title">Câu ${qGlobalIdx}: ${q.q}</div><input type="text" class="sa-input" name="q_${qGlobalIdx}" placeholder="Nhập đáp án..." required><div class="explanation-box" id="exp_q_${qGlobalIdx}" style="display: none;"></div></div>`;
+                    container.innerHTML += `<div class="q-card" id="card_q_${qGlobalIdx}"><div class="q-title">Câu ${qGlobalIdx}: ${q.q}</div><input type="text" class="sa-input" name="q_${qGlobalIdx}" placeholder="Nhập đáp án..." ><div class="explanation-box" id="exp_q_${qGlobalIdx}" style="display: none;"></div></div>`;
                 });
             }
             renderMath(container);
