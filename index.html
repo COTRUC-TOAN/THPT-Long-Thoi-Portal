@@ -2202,15 +2202,27 @@ function answerKahoot(selected, correct, btnEl) {
                 setTimeout(() => { toast.style.display = 'none'; }, 2500);
             });
         }
-        function checkUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            const examId = params.get('exam');
-            if (examId) {
-                document.body.classList.add('locked-ui');
-                activeExam = examBank.find(e => e.id === examId);
-                if (activeExam) startExam(examId);
-            }
+    function checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const examId = params.get('exam');
+    if (examId) {
+        // 1. Kích hoạt chế độ khóa giao diện (ẩn toàn bộ menu, không cho thoát ra kho đề)
+        document.body.classList.add('locked-ui');
+
+        // 2. Tắt cổng chọn giáo viên và trang chủ
+        const gate = document.getElementById('teacher-portal-gate');
+        if (gate) gate.style.display = 'none';
+
+        const portal = document.getElementById('portal-view');
+        if (portal) portal.style.display = 'none';
+
+        // 3. Mở thẳng bài thi được chỉ định
+        activeExam = examBank.find(e => String(e.id).trim() === String(examId).trim());
+        if (activeExam) {
+            startExam(activeExam.id);
         }
+    }
+}
 
         // TẢI FILE PDF
         document.addEventListener('DOMContentLoaded', function() {
