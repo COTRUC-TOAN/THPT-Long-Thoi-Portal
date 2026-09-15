@@ -2322,29 +2322,11 @@ function answerKahoot(selected, correct, btnEl) {
             const portal = document.getElementById('portal-view');
             if (portal) portal.style.display = 'none';
 
-            // Hiện màn hình chờ xoay tròn sinh động, không bị cảm giác khựng đơ
-            let loader = document.getElementById('exam-loading-screen');
-            if (!loader) {
-                loader = document.createElement('div');
-                loader.id = 'exam-loading-screen';
-                loader.style.cssText = 'position:fixed; inset:0; background:#f8fafc; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:"Times New Roman", Times, serif;';
-                loader.innerHTML = `
-                    <div style="width:60px; height:60px; border:5px solid #e2e8f0; border-top:5px solid #1d4ed8; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:18px;"></div>
-                    <h3 style="color:#1e293b; margin-bottom:6px; font-size:1.3rem;">Đang chuẩn bị đề thi...</h3>
-                    <p style="color:#64748b; font-size:1rem;">Hệ thống đang đồng bộ dữ liệu, vui lòng chờ giây lát</p>
-                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-                `;
-                document.body.appendChild(loader);
-            }
-
-            // Dùng script mặc định nếu chưa chọn giáo viên
+          // Dùng script mặc định nếu chưa chọn giáo viên
             if (!SCRIPT_URL) {
                 SCRIPT_URL = TEACHERS_DIRECTORY['trucnt'].defaultUrl;
             }
-            fetchData().finally(() => {
-                const ld = document.getElementById('exam-loading-screen');
-                if (ld) ld.remove();
-            });
+            fetchData();
         }
         // NẾU VÀO TRANG CHỦ BÌNH THƯỜNG
         else if (currentTeacherId && TEACHERS_DIRECTORY[currentTeacherId] && getTeacherScriptUrl(currentTeacherId)) {
