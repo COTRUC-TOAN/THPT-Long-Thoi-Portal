@@ -969,7 +969,14 @@ span.MathJax {
 
     // Gom nhiều dòng trống liên tiếp do khung ảnh rỗng thành 1 khoảng trắng
     textContent = textContent.replace(/\n\s*\n+/g, '\n');
-
+// Tự động nối các dòng bị đứt ngang mà vẫn giữ nguyên phân cách Câu và Đáp án
+    textContent = textContent.replace(/([^\.\?\!\:\n])\n+([^\n])/g, (match, p1, p2) => {
+        let trimmedNext = p2.trim();
+        if (/^(Câu|Bài|[A-D][\.\)]|[a-d][\)])/i.test(trimmedNext)) {
+            return p1 + '\n' + p2;
+        }
+        return p1 + ' ' + p2;
+    });
      textContent = cleanLatexAndText(textContent);
     textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
 
