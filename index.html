@@ -956,14 +956,22 @@ span.MathJax {
         img.outerHTML = placeholder;
     });
 
-    // 2. CHUẨN HÓA VĂN BẢN
+   // 2. CHUẨN HÓA VĂN BẢN - TỰ ĐỘNG DỌN RÁC WORD VÀ NỐI DÒNG BỊ GÃY
     let textContent = tempDiv.innerHTML
         .replace(/<[ub]>([A-D])[\.\)]<\/[ub]>/gi, '$1.')
         .replace(/<br\s*[\/]?>/gi, '\n')
+        // Xóa sạch các thẻ rỗng mà Word tạo ra (thẻ ảnh cũ, khoảng trắng ngầm)
+        .replace(/<(p|div)[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/\1>/gi, ' ')
         .replace(/<\/?(div|p|h[1-6]|ul|ol|li|tr)[^>]*>/gi, '\n')
-        .replace(/<[^>]*>/gi, '') // Xóa sạch thẻ HTML thừa sau khi đã cất ảnh an toàn
+        .replace(/<[^>]*>/gi, '') 
         .replace(/&nbsp;/gi, ' ')
         .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    // Gom nhiều dòng trống liên tiếp do khung ảnh rỗng thành 1 khoảng trắng
+    textContent = textContent.replace(/\n\s*\n+/g, '\n');
+
+    // Nối liền chữ nếu câu văn đang nói dở mà bị ngắt dòng vô lý (như 'hình \n vẽ')
+    textContent = textContent.replace(/([^\.\:\?\!\n])\n+([a-zà-ỹ0-9\(\[\$])/gi, '$1 $2');
 
     textContent = cleanLatexAndText(textContent);
     textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
