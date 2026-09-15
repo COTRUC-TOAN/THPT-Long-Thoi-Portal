@@ -1901,9 +1901,7 @@ function toggleExamPasswordField() {
                     else if (correctSubCount === 3) totalWeightedScore += 0.5;
                     else if (correctSubCount === 4) totalWeightedScore += 1.0;
                 }
-      else if (correctSubCount === 4) totalWeightedScore += 1.0;
-                }
-
+    
                 // TÔ MÀU TRỰC TIẾP TỪNG DÒNG ĐÁP ÁN (KHÔNG ĐỔI MÀU ĐỀ)
                 const qNum = idx + 1;
                 const expEl = document.getElementById(`exp_q_${qNum}`);
@@ -1977,10 +1975,7 @@ function toggleExamPasswordField() {
                 }
             });
 
-            let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
-            });
-
-            let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
+              let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
             const resDiv = document.getElementById('quiz-result');
             resDiv.style.display = 'block';
             resDiv.innerHTML = `🎉 Điểm số: <strong>${finalScore} / 10</strong>`;
