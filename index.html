@@ -970,10 +970,7 @@ span.MathJax {
     // Gom nhiều dòng trống liên tiếp do khung ảnh rỗng thành 1 khoảng trắng
     textContent = textContent.replace(/\n\s*\n+/g, '\n');
 
-    // Nối liền chữ nếu câu văn đang nói dở mà bị ngắt dòng vô lý (như 'hình \n vẽ')
-    textContent = textContent.replace(/([^\.\:\?\!\n])\n+([a-zà-ỹ0-9\(\[\$])/gi, '$1 $2');
-
-    textContent = cleanLatexAndText(textContent);
+     textContent = cleanLatexAndText(textContent);
     textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
 
     // Chia từng block câu hỏi
