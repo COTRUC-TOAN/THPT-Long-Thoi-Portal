@@ -64,7 +64,14 @@
         body { font-family: 'Times New Roman', Times, serif; background-color: var(--bg); color: var(--text-dark); min-height: 100vh; padding-bottom: 50px; font-size: 1.15rem; line-height: 1.5; }
         .wrapper { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
-        body.locked-ui .navbar, body.locked-ui .sidebar, body.locked-ui .grade-bar, body.locked-ui .btn-back { display: none !important; }
+        /* Khóa chặt học sinh: Ẩn thanh menu trên đầu, thanh chọn khối, mục lục, nút Trở về và kho đề */
+body.locked-ui .navbar, 
+body.locked-ui .sidebar, 
+body.locked-ui .grade-bar, 
+body.locked-ui #portal-view,
+body.locked-ui .btn-nav-outline { 
+    display: none !important; 
+}
         body.locked-ui .portal-layout { display: block !important; grid-template-columns: 1fr !important; }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
