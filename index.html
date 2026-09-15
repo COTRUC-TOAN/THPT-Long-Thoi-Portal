@@ -958,34 +958,36 @@ span.MathJax {
 
               
             
- // 2. CHUẨN HÓA VĂN BẢN - TỰ ĐỘNG DỌN RÁC WORD VÀ NỐI DÒNG BỊ GÃY
+// 1. CHUẨN HÓA VĂN BẢN VÀ DỌN SẠCH RÁC TỪ WORD
+    let tempDiv = document.createElement('div');
+    tempDiv.innerHTML = rawHtml;
+
     let textContent = tempDiv.innerHTML
         .replace(/<[ub]>([A-D])[\.\)]<\/[ub]>/gi, '$1.')
         .replace(/<br\s*[\/]?>/gi, '\n')
-        // Xóa sạch các thẻ rỗng mà Word tạo ra (thẻ ảnh cũ, khoảng trắng ngầm)
         .replace(/<(p|div)[^>]*>(\s|&nbsp;|<br\s*\/?>)*<\/\1>/gi, ' ')
         .replace(/<\/?(div|p|h[1-6]|ul|ol|li|tr)[^>]*>/gi, '\n')
         .replace(/<[^>]*>/gi, '') 
         .replace(/&nbsp;/gi, ' ')
         .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-    // Ép chữ "Câu X" luôn nằm ở đầu dòng mới, tuyệt đối không bị dính vào đáp án trước
-    textContent = textContent.replace(/([^\n])\s*(C[âa]u\s+\d+)/gi, '$1\n$2');
+    // Xử lý chuẩn hóa các dòng Đáp án để không bao giờ để lại chữ cái thừa thãi gây lỗi dính câu
+    textContent = textContent.replace(/(?:Đ\s*[\/]?\s*A|Đáp\s*án)[:\s]*([A-D])/gi, '\nĐáp án: $1\n');
 
-    // Gom nhiều dòng trống liên tiếp do khung ảnh rỗng thành 1 khoảng trắng
-    textContent = textContent.replace(/\n\s*\n+/g, '\n');
+    // Ép buộc mọi từ "Câu X" hoặc "Bài X" luôn luôn phải nằm ở đầu dòng mới hoàn toàn
+    textContent = textContent.replace(/([^\n])\s*(C[âa]u|B[àa]i)\s+(\d+)/gi, '$1\n\n$2 $3');
+    textContent = textContent.replace(/\n\s*\n+/g, '\n\n');
 
-    // Tự động nối các dòng bị đứt ngang mà vẫn giữ nguyên phân cách Câu và Đáp án
+    // Tự động nối các dòng bị đứt ngang giữa chừng (như [1; \n 5]) nhưng giữ nguyên dòng Câu và Đáp án
     textContent = textContent.replace(/([^\.\?\!\:\n])\n+([^\n])/g, (match, p1, p2) => {
         let trimmedNext = p2.trim();
-        if (/^(Câu|Bài|[A-D][\.\)]|[a-d][\)])/i.test(trimmedNext)) {
+        if (/^(Câu|Bài|Đáp\s*án|[A-D][\.\)]|[a-d][\)])/i.test(trimmedNext)) {
             return p1 + '\n' + p2;
         }
         return p1 + ' ' + p2;
     });
 
     textContent = cleanLatexAndText(textContent);
-    textContent = textContent.replace(/(?:C[âa]u|B[àa]i|C)\s*\n+\s*(\d+)/gi, 'Câu $1');
     // Chia từng block câu hỏi
     let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.])/i)
         .map(b => b.trim())
