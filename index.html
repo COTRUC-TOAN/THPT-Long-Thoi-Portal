@@ -2248,6 +2248,8 @@ function answerKahoot(selected, correct, btnEl) {
         if (hasExamParam) {
             const gate = document.getElementById('teacher-portal-gate');
             if (gate) gate.style.display = 'none';
+            const portal = document.getElementById('portal-view');
+if (portal) portal.style.display = 'none';
             // Dùng script mặc định nếu chưa chọn giáo viên
             if (!SCRIPT_URL) {
                 SCRIPT_URL = TEACHERS_DIRECTORY['trucnt'].defaultUrl;
