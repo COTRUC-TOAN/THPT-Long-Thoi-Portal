@@ -942,12 +942,12 @@ span.MathJax {
             });
         }
 
-      function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
+  function parseTextToQuestionsAllInOne(rawHtml, grade, topic) {
     let parsedArr = [];
     let tempDiv = document.createElement('div');
     tempDiv.innerHTML = (rawHtml || '').normalize('NFC');
 
-    // 1. CÔ LẬP TOÀN BỘ THẺ ẢNH (Bảo vệ dữ liệu base64 không bị regex chữ cái A-D làm biến dạng)
+    // 1. CÔ LẬP TOÀN BỘ THẺ ẢNH (Bảo vệ ảnh không bị ảnh hưởng)
     let imageMap = [];
     let imgNodes = tempDiv.querySelectorAll('img');
     imgNodes.forEach((img, i) => {
@@ -966,30 +966,21 @@ span.MathJax {
         .replace(/&nbsp;/gi, ' ')
         .replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-    // Xử lý chuẩn hóa các dòng Đáp án để không bao giờ để lại chữ cái thừa thãi gây lỗi dính câu
+    // Chuẩn hóa dòng Đáp án
     textContent = textContent.replace(/(?:Đ\s*[\/]?\s*A|Đáp\s*án)[:\s]*([A-D])/gi, '\nĐáp án: $1\n');
 
-    // Ép buộc mọi từ "Câu X" hoặc "Bài X" luôn luôn phải nằm ở đầu dòng mới hoàn toàn
-    textContent = textContent.replace(/([^\n])\s*(C[âa]u|B[àa]i)\s+(\d+)/gi, '$1\n\n$2 $3');
+    // ÉP MỌI TỪ "Câu X" HOẶC "Bài X" LUÔN NẰM Ở ĐẦU DÒNG MỚI ĐỂ CHIA CẮT CHÍNH XÁC
+    textContent = textContent.replace(/([^\n])\s*(C[âa]u|B[àa]i|C)\s*(\d+)[\s:.]/gi, '$1\n\nCâu $3.');
     textContent = textContent.replace(/\n\s*\n+/g, '\n\n');
-
-    // Tự động nối các dòng bị đứt ngang giữa chừng (như [1; \n 5]) nhưng giữ nguyên dòng Câu và Đáp án
-    textContent = textContent.replace(/([^\.\?\!\:\n])\n+([^\n])/g, (match, p1, p2) => {
-        let trimmedNext = p2.trim();
-        if (/^(Câu|Bài|Đáp\s*án|[A-D][\.\)]|[a-d][\)])/i.test(trimmedNext)) {
-            return p1 + '\n' + p2;
-        }
-        return p1 + ' ' + p2;
-    });
 
     textContent = cleanLatexAndText(textContent);
 
-    // Chia từng block câu hỏi
-    let blocks = textContent.split(/(?:^|\n)(?=(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.])/i)
+    // 3. CHIA TỪNG BLOCK CÂU HỎI THÔNG MINH (Dựa trên từ khóa Câu X hoặc Bài X)
+    let blocks = textContent.split(/(?:^|\n)\s*(?=(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.]?)/i)
         .map(b => b.trim())
-        .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]/i.test(b));
+        .filter(b => b.length > 0 && /(?:C[âa]u|B[àa]i|C)\s*\d+/i.test(b));
 
-    // Hàm trả ảnh về đúng chỗ sau khi xử lý xong văn bản
+    // Hàm trả ảnh về đúng chỗ
     function restoreAllImages(str) {
         if (!str) return '';
         let result = str;
@@ -1007,7 +998,7 @@ span.MathJax {
         let explanation = '';
         let qContent = '';
 
-        // TÁCH LỜI GIẢI CHI TIẾT (NẾU CÓ)
+        // TÁCH LỜI GIẢI CHI TIẾT
         let expMatch = block.match(/(?:L[ờo]i\s*gi[ảa]i|H[ưướ]ng\s*dẫ?n|Lời\s*giải\s*chi\s*tiết)\s*[:\-]?\s*([\s\S]*)$/i);
         if (expMatch) {
             explanation = expMatch[1].trim();
@@ -1019,18 +1010,15 @@ span.MathJax {
 
         if (hasTfOptions) {
             detectedType = 'TF';
-
             let tfAnsMatch = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([DSĐSdđ\s,\.\-]+)/i);
             if (tfAnsMatch) {
                 let cleanTF = tfAnsMatch[1].toUpperCase().replace(/Đ/g, 'D').replace(/[^DS]/g, '');
-                if (cleanTF.length >= 4) {
-                    ans = cleanTF.substring(0, 4);
-                }
+                if (cleanTF.length >= 4) ans = cleanTF.substring(0, 4);
                 block = block.replace(tfAnsMatch[0], '').trim();
             }
 
             let split_a = block.split(/(?:^|\s)a[\)\.]\s*/);
-            qContent = split_a[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+            qContent = split_a[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.]?\s*/i, '').trim();
 
             let rest = "a) " + split_a.slice(1).join("a) ");
             let m_a = rest.match(/a[\)\.]\s*([\s\S]*?)(?=(?:^|\s)b[\)\.]\s*)/i);
@@ -1042,7 +1030,6 @@ span.MathJax {
             options[1] = m_b ? m_b[1].trim() : '';
             options[2] = m_c ? m_c[1].trim() : '';
             options[3] = m_d ? m_d[1].trim() : '';
-
             options[3] = options[3].replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*.*$/i, '').trim();
 
             if (!ans || ans.length !== 4) ans = 'DDDS';
@@ -1051,7 +1038,6 @@ span.MathJax {
         // KIỂM TRA ĐỊNH DẠNG: TRẮC NGHIỆM (MCQ)
         else if (block.search(/(?:^|\s)A[\.\)]/) !== -1 && block.search(/(?:^|\s)B[\.\)]/) !== -1) {
             detectedType = 'MCQ';
-
             let ansMatch = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([A-D])\b/i);
             if (ansMatch) {
                 ans = ansMatch[1].trim().toUpperCase();
@@ -1059,7 +1045,7 @@ span.MathJax {
             }
 
             let splitA = block.split(/(?:^|\s)A[\.\)]\s*/);
-            qContent = splitA[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+            qContent = splitA[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.]?\s*/i, '').trim();
 
             let rest = "A. " + splitA.slice(1).join("A. ");
             let mOptA = rest.match(/A[\.\)]\s*([\s\S]*?)(?=(?:^|\s)B[\.\)]\s*)/i);
@@ -1071,7 +1057,6 @@ span.MathJax {
             options[1] = mOptB ? mOptB[1].trim() : '';
             options[2] = mOptC ? mOptC[1].trim() : '';
             options[3] = mOptD ? mOptD[1].trim() : '';
-
             options[3] = options[3].replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*[A-D]?\s*$/i, '').trim();
 
             if (!ans) {
@@ -1090,7 +1075,7 @@ span.MathJax {
                 ans = ansGeneral[1].trim();
                 block = block.replace(ansGeneral[0], '').trim();
             }
-            qContent = block.replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+\s*[:.]\s*/i, '').trim();
+            qContent = block.replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.]?\s*/i, '').trim();
             qContent = qContent.replace(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*.*$/i, '').trim();
         }
 
