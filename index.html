@@ -437,10 +437,10 @@ span.MathJax {
                         <div class="form-row"><label>Tên Đề:</label><input type="text" class="form-input" id="new-exam-title" placeholder="Kiểm Tra 45 Phút"></div>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div class="form-row"><label>Chế Độ:</label><select class="form-input" id="new-exam-mode" onchange="toggleExamPasswordField()"><option value="LUYENTAP">🟢 Luyện Tập</option><option value="KIEMTRA">🔴 Kiểm Tra (Bảo Mật Cao)</option><option value="BAIGIANG">📘 Bài Giảng</option><option value="KAHOOT">⚡ Đấu Trường Kahoot</option></select></div>
-                            <div class="form-row"><label>Thời Gian (Phút):</label><input type="number" class="form-input" id="new-exam-time" value="45"></div>
-                       <div class="form-row"><label>Số lần làm tối đa (0 = Không giới hạn):</label><input type="number" class="form-input" id="new-exam-max-attempts" value="2" min="0" placeholder="VD: 1, 2, 3..."></div>
+                            <div class="form-row"><label>Chế Độ:</label><select class="form-input" id="new-exam-mode" onchange="toggleExamPasswordField()"><option value="LUYENTAP">🟢 Luyện Tập</option><option value="KIEMTRA">🔴 Kiểm Tra (Bảo Mật Cao)</option><option value="BAIGIANG">📘 Bài Giảng</option><option value="KAHOOT">⚡ Đấu Trường Kahoot</option><option value="KHAOSAT">📊 Khảo Sát Ý Kiến</option></select></div>
                         </div>
+                            <div class="form-row"><label>Thời Gian (Phút):</label><input type="number" class="form-input" id="new-exam-time" value="45"></div>
+                       <div class="form-row"><label>Số lần làm tối đa (0 = Không giới hạn):</label><input type="number" class="form-input" id="new-exam-max-attempts" value="2" min="0" placeholder="VD: 1, 2, 3..."></div>   
                         
                         <div id="lecture-fields" style="display: none; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                             <h4 style="margin-top: 0; color: #0f172a; margin-bottom: 10px;"><i class="fa-solid fa-photo-film"></i> Thông tin Bài giảng & Tài liệu</h4>
@@ -626,6 +626,21 @@ span.MathJax {
             </div>
         </div>
     </div>
+    <!-- HỘP THOẠI THỐNG KÊ KHẢO SÁT REALTIME TRÌNH CHIẾU -->
+    <div id="survey-stats-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 999999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 950px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden;">
+            <div style="padding: 18px 24px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 id="survey-modal-title" style="margin: 0; color: #1e40af; font-size: 1.3rem;"><i class="fa-solid fa-chart-column"></i> KẾT QUẢ KHẢO SÁT TRỰC TUYẾN</h3>
+                    <span style="font-size: 0.95rem; color: #64748b;">Tổng số người đã phản hồi: <strong id="survey-total-respondents" style="color: #ea580c; font-size: 1.2rem;">0</strong> phiếu</span>
+                </div>
+                <button onclick="closeSurveyStats()" style="background: #fee2e2; border: none; color: #dc2626; font-size: 1.4rem; font-weight: bold; width: 38px; height: 38px; border-radius: 50%; cursor: pointer;">&times;</button>
+            </div>
+            <div id="survey-stats-content" style="padding: 24px; overflow-y: auto; flex-grow: 1;">
+                <p style="text-align: center; color: #64748b;">Đang kết nối dữ liệu...</p>
+            </div>
+        </div>
+    </div>
     <!-- ĐÁNH DẤU BẢN QUYỀN TÁC GIẢ -->
     <div style="text-align: center; padding: 25px 15px 15px 15px; margin-top: 40px; color: #64748b; font-size: 1rem; border-top: 1px solid #e2e8f0; line-height: 1.6; font-family: 'Times New Roman', Times, serif;">
         <strong>© 2026 Hệ thống Khảo thí & Học tập Số hóa</strong><br>
@@ -636,7 +651,7 @@ span.MathJax {
     <script>
         // DANH MỤC GIÁO VIÊN HỆ THỐNG
         const TEACHERS_DIRECTORY = {
-            'trucnt':  { name: 'Cô Nguyễn Thanh Trúc', subject: 'Toán', defaultUrl: 'https://script.google.com/macros/s/AKfycbzis37_BfronfYS2csvtAfqZJOcQBHzmbZtymoNPFtLdGgI3ghiNUXCHuVq4i6Gsetw/exec' },
+            'trucnt':  { name: 'Cô Nguyễn Thanh Trúc', subject: 'Toán', defaultUrl: 'https://script.google.com/macros/s/AKfycbwgqygMftm-_1D5VbRi8X-JFxJv1UHiKmTid5ulPiOHy9Zv5nib3fVDoXb7S92Sj_Z8wA/exec' },
             'vanntkt': { name: 'Cô Nguyễn Thị Kiều Tuyết Vân', subject: 'Toán', defaultUrl: '' },
             'hoantt':  { name: 'Cô Nguyễn Thị Thu Hoa', subject: 'Toán', defaultUrl: '' },
             'nhuntq':  { name: 'Cô Nguyễn Thị Quỳnh Như', subject: 'Toán', defaultUrl: '' },
@@ -921,17 +936,18 @@ span.MathJax {
                 grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 40px;">Chưa có đề thi nào trong mục này.</p>`;
                 return;
             }
-            list.forEach(ex => {
+       list.forEach(ex => {
                 const isKahoot = ex.mode === 'KAHOOT'; 
                 const isExamMode = ex.mode === 'KIEMTRA';
                 const isLecture = ex.mode === 'BAIGIANG';
+                const isSurvey = ex.mode === 'KHAOSAT';
                 const gradeDisplay = ex.grade ? ex.grade.toString().toUpperCase() : '';
                 const card = document.createElement('div'); card.className = 'exam-card';
                 card.innerHTML = `
-                    <div class="card-banner ${isKahoot ? 'kahoot-mode' : (isExamMode ? 'exam-mode' : (isLecture ? 'lecture-mode' : ''))}" style="${isLecture ? 'background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);' : ''}">
-                        <div class="card-icon"><i class="fa-solid ${isKahoot ? 'fa-bolt' : (isLecture ? 'fa-photo-film' : 'fa-book-open')}"></i></div>
+                    <div class="card-banner ${isKahoot ? 'kahoot-mode' : (isExamMode ? 'exam-mode' : (isLecture ? 'lecture-mode' : ''))}" style="${isLecture ? 'background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);' : (isSurvey ? 'background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);' : '')}">
+                        <div class="card-icon"><i class="fa-solid ${isKahoot ? 'fa-bolt' : (isLecture ? 'fa-photo-film' : (isSurvey ? 'fa-square-poll-vertical' : 'fa-book-open'))}"></i></div>
                         <div class="card-badge">KHỐI ${gradeDisplay}</div>
-                        <div class="card-mode-badge" style="color: ${isKahoot ? '#7c3aed' : (isExamMode ? '#dc2626' : (isLecture ? '#0284c7' : '#16a34a'))};">${isKahoot ? '⚡ KAHOOT' : (isExamMode ? '🔴 KIỂM TRA' : (isLecture ? '📘 BÀI GIẢNG' : '🟢 LUYỆN TẬP'))}</div>
+                        <div class="card-mode-badge" style="color: ${isSurvey ? '#ea580c' : (isKahoot ? '#7c3aed' : (isExamMode ? '#dc2626' : (isLecture ? '#0284c7' : '#16a34a')))};">${isSurvey ? '📊 KHẢO SÁT' : (isKahoot ? '⚡ KAHOOT' : (isExamMode ? '🔴 KIỂM TRA' : (isLecture ? '📘 BÀI GIẢNG' : '🟢 LUYỆN TẬP')))}</div>
                     </div>
                     <div class="card-body">
                         <div><h3 class="card-title">${ex.title}</h3>
@@ -1738,7 +1754,10 @@ function renderScoresTable() {
             container.innerHTML = examBank.map(ex => `
                 <div class="exam-manage-row">
                     <div><strong>[Khối ${ex.grade}] ${ex.title}</strong> <span style="font-size:0.9rem; color:#64748b;">(Mã: ${ex.id} - ${ex.questions ? ex.questions.length : 0} câu)</span></div>
-                    <button class="btn-del-exam" onclick="deleteExamFromSystem('${ex.id}')"><i class="fa-solid fa-trash"></i> Xóa Đề</button>
+                <div style="display: flex; gap: 8px;">
+    ${ex.mode === 'KHAOSAT' ? `<button class="btn-start" style="background: #ea580c; padding: 6px 14px; font-size: 0.95rem;" onclick="openSurveyStats('${ex.id}')"><i class="fa-solid fa-chart-pie"></i> Xem Thống Kê</button>` : ''}
+    <button class="btn-del-exam" onclick="deleteExamFromSystem('${ex.id}')"><i class="fa-solid fa-trash"></i> Xóa Đề</button>
+</div>
                 </div>`).join('');
         }
         async function deleteExamFromSystem(examId) {
@@ -1950,7 +1969,9 @@ function toggleExamPasswordField() {
             const btnSubmit = document.getElementById('btn-submit-quiz');
             btnSubmit.disabled = true;
 
-            let totalWeightedScore = 0; let maxPossibleScore = 0;
+          let totalWeightedScore = 0; let maxPossibleScore = 0;
+            let surveyResponses = {};
+
             processedQuestions.forEach((q, idx) => {
                 let qType = (q.type || 'MCQ').toUpperCase();
                 let weight = (qType === 'TF') ? 1.0 : ((qType === 'SA') ? 0.5 : 0.25);
@@ -1958,14 +1979,18 @@ function toggleExamPasswordField() {
 
                 if (qType === 'MCQ') {
                     let userAns = document.querySelector(`input[name="q_${idx + 1}"]:checked`)?.value || "";
+                    surveyResponses[q.id || `Q_${idx+1}`] = userAns;
                     if (userAns.trim().toUpperCase() === String(q.ans || "").trim().toUpperCase()) totalWeightedScore += weight;
                 } else if (qType === 'SA') {
                     let userAns = document.querySelector(`input[name="q_${idx + 1}"]`)?.value.trim() || "";
+                    surveyResponses[q.id || `Q_${idx+1}`] = userAns;
                     if (userAns.toLowerCase() === String(q.ans || "").trim().toLowerCase()) totalWeightedScore += weight;
                 } else if (qType === 'TF') {
+                    let subAnsList = ['a', 'b', 'c', 'd'].map(ch => document.querySelector(`input[name="q_${idx + 1}_${ch}"]:checked`)?.value || "");
+                    surveyResponses[q.id || `Q_${idx+1}`] = subAnsList.join('');
                     let correctSubCount = 0;
                     ['a', 'b', 'c', 'd'].forEach((ch, subIdx) => {
-                        let subAns = document.querySelector(`input[name="q_${idx + 1}_${ch}"]:checked`)?.value || "";
+                        let subAns = subAnsList[subIdx];
                         let correctSub = q.ansOptions ? q.ansOptions[subIdx] : 'D';
                         if (subAns === correctSub) correctSubCount++;
                     });
@@ -2049,6 +2074,22 @@ function toggleExamPasswordField() {
                 }
             });
 renderMath(document.getElementById('quiz-content'));
+            // XỬ LÝ RIÊNG CHO KHẢO SÁT: LƯU VÀO FIREBASE RỒI THÔNG BÁO CẢM ƠN (KHÔNG CHẤM ĐIỂM)
+            if (activeExam.mode === 'KHAOSAT') {
+                db.ref(`surveys/${activeExam.id}/responses`).push({
+                    name: name,
+                    class: sClass,
+                    time: new Date().toLocaleString("vi-VN"),
+                    answers: surveyResponses
+                });
+                document.getElementById('quiz-content').style.display = 'none';
+                document.getElementById('btn-submit-quiz').style.display = 'none';
+                const resDiv = document.getElementById('quiz-result');
+                resDiv.style.display = 'block';
+                resDiv.innerHTML = `📊 <strong>CẢM ƠN QUÝ THẦY/CÔ ĐÃ GÓP Ý!</strong><br>Ý kiến phản hồi của bạn đã được hệ thống ghi nhận thành công.`;
+                localStorage.setItem(cleanKey, currentAttempts + 1);
+                return; // Dừng hàm tại đây, không lưu điểm thi
+            }
               let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
             const resDiv = document.getElementById('quiz-result');
             resDiv.style.display = 'block';
@@ -2422,6 +2463,79 @@ function answerKahoot(selected, correct, btnEl) {
         } else {
             const gate = document.getElementById('teacher-portal-gate');
             if (gate) gate.style.display = 'flex';
-        }    </script>
+        }    
+        // LOGIC THỐNG KÊ KHẢO SÁT REAL-TIME
+        let surveyListenerRef = null;
+        function openSurveyStats(examId) {
+            const ex = examBank.find(e => e.id === examId);
+            if (!ex) return;
+            
+            document.getElementById('survey-modal-title').innerHTML = `<i class="fa-solid fa-chart-column"></i> KẾT QUẢ KHẢO SÁT: ${ex.title}`;
+            document.getElementById('survey-stats-modal').style.display = 'flex';
+            
+            if (surveyListenerRef) surveyListenerRef.off();
+            surveyListenerRef = db.ref(`surveys/${examId}/responses`);
+            
+            surveyListenerRef.on('value', snapshot => {
+                const val = snapshot.val();
+                const responses = val ? Object.values(val) : [];
+                const totalResp = responses.length;
+                document.getElementById('survey-total-respondents').innerText = totalResp;
+                
+                const container = document.getElementById('survey-stats-content');
+                if (totalResp === 0) {
+                    container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 40px; font-size: 1.1rem;"><i class="fa-solid fa-spinner fa-spin"></i> Chưa có phản hồi nào. Mời quý Thầy/Cô tiếp tục bình chọn!</p>`;
+                    return;
+                }
+                
+                const questions = ex.questions || [];
+                container.innerHTML = questions.map((q, idx) => {
+                    const qId = q.id || `Q_${idx+1}`;
+                    const counts = { 'A': 0, 'B': 0, 'C': 0, 'D': 0 };
+                    
+                    responses.forEach(r => {
+                        const ans = r.answers ? r.answers[qId] : '';
+                        if (counts[ans] !== undefined) counts[ans]++;
+                    });
+                    
+                    const maxVal = Math.max(...Object.values(counts));
+                    
+                    const optsHtml = ['A', 'B', 'C', 'D'].map((optKey, i) => {
+                        const optText = q.options ? q.options[i] : '';
+                        if (!optText) return '';
+                        const count = counts[optKey];
+                        const pct = totalResp > 0 ? Math.round((count / totalResp) * 100) : 0;
+                        const isTop = (count === maxVal && maxVal > 0);
+                        
+                        return `
+                            <div style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 1.05rem; margin-bottom: 5px;">
+                                    <span><strong>${optKey}.</strong> ${optText} ${isTop ? '<span style="color: #ea580c; font-weight: bold;">⭐ (Nhiều nhất)</span>' : ''}</span>
+                                    <span style="font-weight: bold; color: ${isTop ? '#ea580c' : '#1e40af'};">${pct}% (${count} người)</span>
+                                </div>
+                                <div style="background: #e2e8f0; height: 16px; border-radius: 10px; overflow: hidden;">
+                                    <div style="width: ${pct}%; background: ${isTop ? 'linear-gradient(90deg, #ea580c, #f97316)' : '#3b82f6'}; height: 100%; border-radius: 10px; transition: width 0.6s;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    return `
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 18px; margin-bottom: 18px;">
+                            <h4 style="color: #0f172a; margin-bottom: 14px; font-size: 1.15rem; line-height: 1.6;">Câu ${idx + 1}: ${q.q}</h4>
+                            ${optsHtml}
+                        </div>
+                    `;
+                }).join('');
+                
+                renderMath(container);
+            });
+        }
+
+        function closeSurveyStats() {
+            if (surveyListenerRef) surveyListenerRef.off();
+            document.getElementById('survey-stats-modal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
