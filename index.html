@@ -132,14 +132,14 @@ body.locked-ui .btn-nav-outline {
         .badge-pass { background: #dcfce7; color: #166534; }
         .badge-fail { background: #fee2e2; color: #991b1b; }
         
-        .creator-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; margin-top: 15px; }
+    .creator-container { display: grid; grid-template-columns: 1fr; gap: 25px; margin-top: 15px; }
         @media (max-width: 950px) { .creator-container { grid-template-columns: 1fr; } }
         .creator-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; }
         .form-row { margin-bottom: 12px; }
         .form-row label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 1.05rem; color: #334155; }
         .form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.05rem; outline: none; background: #fff; font-family: 'Times New Roman', Times, serif; }
         .rich-textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1.15rem; outline: none; background: #fff; overflow-y: auto; overflow-x: auto; font-family: 'Times New Roman', Times, serif; line-height: 1.6; }
-        .rich-textarea * { max-width: 100% !important; word-wrap: break-word !important; overflow-wrap: break-word !important; }
+     .rich-textarea * { max-width: 100% !important; word-wrap: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; overflow-x: hidden !important; }
         .rich-textarea p, .rich-textarea div, .rich-textarea span { margin-left: 0 !important; text-indent: 0 !important; padding-left: 0 !important; white-space: normal !important; }
         .rich-textarea table { width: 100% !important; table-layout: fixed !important; margin: 10px 0 !important; border-collapse: collapse !important; }
         .rich-textarea td, .rich-textarea th { white-space: normal !important; border: 1px solid #cbd5e1 !important; padding: 6px !important; }
@@ -439,6 +439,7 @@ span.MathJax {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div class="form-row"><label>Chế Độ:</label><select class="form-input" id="new-exam-mode" onchange="toggleExamPasswordField()"><option value="LUYENTAP">🟢 Luyện Tập</option><option value="KIEMTRA">🔴 Kiểm Tra (Bảo Mật Cao)</option><option value="BAIGIANG">📘 Bài Giảng</option><option value="KAHOOT">⚡ Đấu Trường Kahoot</option></select></div>
                             <div class="form-row"><label>Thời Gian (Phút):</label><input type="number" class="form-input" id="new-exam-time" value="45"></div>
+                       <div class="form-row"><label>Số lần làm tối đa (0 = Không giới hạn):</label><input type="number" class="form-input" id="new-exam-max-attempts" value="2" min="0" placeholder="VD: 1, 2, 3..."></div>
                         </div>
                         
                         <div id="lecture-fields" style="display: none; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -625,12 +626,17 @@ span.MathJax {
             </div>
         </div>
     </div>
+    <!-- ĐÁNH DẤU BẢN QUYỀN TÁC GIẢ -->
+    <div style="text-align: center; padding: 25px 15px 15px 15px; margin-top: 40px; color: #64748b; font-size: 1rem; border-top: 1px solid #e2e8f0; line-height: 1.6; font-family: 'Times New Roman', Times, serif;">
+        <strong>© 2026 Hệ thống Khảo thí & Học tập Số hóa</strong><br>
+        Nghiên cứu & phát triển bởi <span style="color: #1d4ed8; font-weight: bold;">GV Nguyễn Thanh Trúc</span> – Trường THPT Long Thới
+    </div>
     <div class="toast-msg" id="toast">Đã sao chép link giao đề!</div>
 
     <script>
         // DANH MỤC GIÁO VIÊN HỆ THỐNG
         const TEACHERS_DIRECTORY = {
-            'trucnt':  { name: 'Cô Nguyễn Thanh Trúc', subject: 'Toán', defaultUrl: 'https://script.google.com/macros/s/AKfycbzis37_BfronfYS2csvtAfqZJOcQBHzmbZtymoNPFtLdGgI3ghiNUXCHuVq4i6Gsetw/exec' },
+            'trucnt':  { name: 'Cô Nguyễn Thanh Trúc', subject: 'Toán', defaultUrl: 'https://script.google.com/macros/s/AKfycbwgqygMftm-_1D5VbRi8X-JFxJv1UHiKmTid5ulPiOHy9Zv5nib3fVDoXb7S92Sj_Z8wA/exec' },
             'vanntkt': { name: 'Cô Nguyễn Thị Kiều Tuyết Vân', subject: 'Toán', defaultUrl: '' },
             'hoantt':  { name: 'Cô Nguyễn Thị Thu Hoa', subject: 'Toán', defaultUrl: '' },
             'nhuntq':  { name: 'Cô Nguyễn Thị Quỳnh Như', subject: 'Toán', defaultUrl: '' },
@@ -883,6 +889,7 @@ span.MathJax {
                         timeLimit: ex.timeLimit || ex.TimeLimit || 45,
                         startTime: ex.startTime || ex.StartTime || '',
                         deadline: ex.deadline || ex.Deadline || '',
+                        maxAttempts: (parsedQ.length > 0 && parsedQ[0].maxAttempts !== undefined) ? parsedQ[0].maxAttempts : (ex.mode === 'KIEMTRA' ? 1 : 0),
                         examPass: ex.examPass || ex.ExamPass || '',
                         youtubeUrl: ex.youtubeUrl || ex.youtubeurl || '',
                         pdfData: ex.pdfData || ex.pdfdata || '',
@@ -1450,6 +1457,10 @@ span.MathJax {
             const examPass = document.getElementById('new-exam-pass') ? document.getElementById('new-exam-pass').value.trim() : '';
             const startTime = document.getElementById('new-exam-start-time').value;
             const deadline = document.getElementById('new-exam-deadline').value;
+            const maxAttemptsVal = parseInt(document.getElementById('new-exam-max-attempts')?.value) || 0;
+if (selectedQuestions.length > 0) {
+    selectedQuestions[0].maxAttempts = maxAttemptsVal;
+}
 
             if (!examId || !title) { alert("⚠️ Vui lòng nhập đầy đủ Mã đề và Tên đề thi!"); return; }
             if (mode !== 'BAIGIANG' && (!selectedQuestions || selectedQuestions.length === 0)) {
@@ -1670,6 +1681,12 @@ function renderScoresTable() {
                 select.innerHTML = `<option value="">-- Chọn lớp của bạn * --</option>` + teacherClasses.map(c => `<option value="${c}">${c}</option>`).join('');
                 classInput.parentNode.replaceChild(select, classInput);
             }
+            const lecClassInput = document.getElementById('lec-std-class');
+    if (lecClassInput && lecClassInput.tagName !== 'SELECT') {
+        const selectLec = document.createElement('select'); selectLec.id = 'lec-std-class'; selectLec.className = 'form-input'; selectLec.required = true;
+        selectLec.innerHTML = `<option value="">-- Chọn lớp của bạn * --</option>` + teacherClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+        lecClassInput.parentNode.replaceChild(selectLec, lecClassInput);
+    }
         }
         function updateScoreClassFilter() {
             const select = document.getElementById('filter-score-class');
@@ -1906,6 +1923,27 @@ function toggleExamPasswordField() {
         document.getElementById('quiz-form').addEventListener('submit', function(e) { e.preventDefault(); submitQuiz(); });
 
         async function submitQuiz() {
+            const checkName = document.getElementById('std-name').value.trim();
+    const checkClass = document.getElementById('std-class').value.trim();
+    if (!checkName) {
+        alert("⚠️ Vui lòng nhập đầy đủ Họ và tên trước khi nộp bài!");
+        document.getElementById('std-name').focus();
+        return;
+    }
+    if (!checkClass || checkClass === "") {
+        alert("⚠️ Vui lòng chọn Lớp học của bạn trước khi nộp bài!");
+        document.getElementById('std-class').focus();
+        return;
+    }
+            // KIỂM TRA GIỚI HẠN SỐ LẦN NỘP BÀI
+    const maxAttempts = (activeExam.maxAttempts !== undefined) ? activeExam.maxAttempts : (activeExam.mode === 'KIEMTRA' ? 1 : 0);
+    const cleanKey = `done_${activeExam.id}_${checkName.toLowerCase()}_${checkClass.toLowerCase()}`;
+    const currentAttempts = parseInt(localStorage.getItem(cleanKey) || '0', 10);
+
+    if (maxAttempts > 0 && currentAttempts >= maxAttempts) {
+        alert(`⚠️ Học sinh [${checkName} - ${checkClass}] đã làm bài này ${currentAttempts}/${maxAttempts} lần cho phép.\nHệ thống không chấp nhận nộp thêm bài nữa!`);
+        return;
+    }
             clearInterval(timerInterval);
             const name = document.getElementById('std-name').value.trim() || "Ẩn danh";
             const sClass = document.getElementById('std-class').value.trim() || "Tự do";
@@ -1938,6 +1976,7 @@ function toggleExamPasswordField() {
                 }
     
                 // TÔ MÀU TRỰC TIẾP TỪNG DÒNG ĐÁP ÁN (KHÔNG ĐỔI MÀU ĐỀ)
+                if (activeExam.mode !== 'KIEMTRA') {
                 const qNum = idx + 1;
                 const expEl = document.getElementById(`exp_q_${qNum}`);
 
@@ -2007,13 +2046,18 @@ function toggleExamPasswordField() {
                     let dAns = q.type === 'TF' ? (q.ansOptions ? q.ansOptions.join(' - ') : q.ans) : q.ans;
                     expEl.innerHTML = `<strong>Đáp án đúng:</strong> <span style="color:#16a34a; font-weight:bold;">${dAns}</span> ${q.explanation ? `<br><strong>Lời giải:</strong> ${q.explanation}` : ''}`;
                 }
+                }
             });
-
+renderMath(document.getElementById('quiz-content'));
               let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
             const resDiv = document.getElementById('quiz-result');
             resDiv.style.display = 'block';
             resDiv.innerHTML = `🎉 Điểm số: <strong>${finalScore} / 10</strong>`;
-
+if (activeExam.mode === 'KIEMTRA') {
+    document.getElementById('quiz-content').style.display = 'none';
+    document.getElementById('btn-submit-quiz').style.display = 'none';
+    resDiv.innerHTML = `🔒 <strong>BÀI THI ĐÃ NỘP THÀNH CÔNG</strong><br>Kết quả của bạn đã được ghi nhận vào hệ thống.<br>Điểm số: <strong style="font-size: 1.5rem; color: #16a34a;">${finalScore} / 10</strong>`;
+}
             try {
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
@@ -2030,6 +2074,7 @@ function toggleExamPasswordField() {
                     })
                 });
             } catch (e) {}
+            localStorage.setItem(cleanKey, currentAttempts + 1);
         }
 
         // BÀI GIẢNG
@@ -2332,6 +2377,7 @@ function answerKahoot(selected, correct, btnEl) {
 
         // TẢI FILE PDF
         document.addEventListener('DOMContentLoaded', function() {
+            updateStudentClassDropdown();
             const pdfFileInput = document.getElementById('lecture-pdf-file');
             if (pdfFileInput) {
                 pdfFileInput.addEventListener('change', function(e) {
