@@ -1689,13 +1689,30 @@ function renderScoresTable() {
     }
 }
 
-        function exportScoresToExcel() {
+      function exportScoresToExcel() {
             if (!globalScoresData || globalScoresData.length === 0) { alert("Chưa có dữ liệu để xuất Excel!"); return; }
-            let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td { mso-number-format:'\@'; }</style></head><body><table border="1"><tr style="background-color:#2563eb; color:white; font-weight:bold;"><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th></tr>`;
-            globalScoresData.forEach(r => {
+
+            // Lấy đúng điều kiện lọc trên màn hình
+            const fClass = (document.getElementById('filter-score-class')?.value || 'all').trim().toLowerCase();
+            const fExam = (document.getElementById('filter-score-exam')?.value || 'all').trim().toLowerCase();
+
+            // Chỉ lọc những em thỏa mãn điều kiện
+            let filteredList = globalScoresData.filter(r => {
+                const itemClass = String(r.sClass || '').trim().toLowerCase();
+                const itemExam = String(r.examTitle || '').trim().toLowerCase();
+                const matchClass = (fClass === 'all' || fClass === '' || itemClass === fClass);
+                const matchExam = (fExam === 'all' || fExam === '' || itemExam === fExam);
+                return matchClass && matchExam;
+            });
+
+            if (filteredList.length === 0) { alert("Không có dữ liệu khớp với bộ lọc để xuất!"); return; }
+
+            let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td { mso-number-format:'\\@'; }</style></head><body><table border="1"><tr style="background-color:#2563eb; color:white; font-weight:bold;"><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th></tr>`;
+            filteredList.forEach(r => {
                 tableHtml += `<tr><td style="text-align:center;">${r.time}</td><td>${r.name}</td><td style="text-align:center;">${r.sClass}</td><td>${r.examTitle}</td><td style="text-align:center; font-weight:bold;">${r.totalScore}</td></tr>`;
             });
             tableHtml += `</table></body></html>`;
+
             const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
