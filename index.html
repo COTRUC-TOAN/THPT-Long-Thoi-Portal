@@ -411,8 +411,8 @@ span.MathJax {
 
                 <div class="table-responsive">
                     <table class="scores-table">
-                        <thead>
-                            <tr><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th></tr>
+                      <thead>
+                            <tr><th style="width: 50px; text-align: center;">STT</th><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th><th>Chi tiết</th></tr>
                         </thead>
                         <tbody id="scores-table-body"><tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 20px;">Chưa có dữ liệu.</td></tr></tbody>
                     </table>
@@ -1653,10 +1653,14 @@ function renderScoresTable() {
     let displayList = (globalScoresData || []).filter(r => {
         const itemClass = String(r.sClass || '').trim().toLowerCase();
         const itemExam = String(r.examTitle || '').trim().toLowerCase();
+        return (fClass === 'all' || fClass === '' || itemClass === fClass) && (fExam === 'all' || fExam === '' || itemExam === fExam);
+    });
 
-        const matchClass = (fClass === 'all' || fClass === '' || itemClass === fClass);
-        const matchExam = (fExam === 'all' || fExam === '' || itemExam === fExam);
-        return matchClass && matchExam;
+    // Ý 2: Sắp xếp tự động theo Lớp -> Tên học sinh
+    displayList.sort((a, b) => {
+        let classCmp = a.sClass.localeCompare(b.sClass, 'vi', { numeric: true });
+        if (classCmp !== 0) return classCmp;
+        return a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' });
     });
 
     const totalEl = document.getElementById('stat-total-submissions');
@@ -1672,46 +1676,140 @@ function renderScoresTable() {
         });
         if (avgEl) avgEl.innerText = count > 0 ? (sum / count).toFixed(2) : '0.0';
 
-        tbody.innerHTML = displayList.map(r => {
+        tbody.innerHTML = displayList.map((r, index) => {
             let num = parseFloat(String(r.totalScore).replace(',', '.'));
             let badgeClass = (!isNaN(num) && num >= 5) ? 'badge-pass' : 'badge-fail';
+            
+            // Tìm ID của bài thi tương ứng để truy xuất dữ liệu Firebase
+            let examIdParam = '';
+            let matchedExam = examBank.find(ex => ex.title.trim() === r.examTitle);
+            if (matchedExam) examIdParam = matchedExam.id;
+
+            // Ý 1 & 3: Có số thứ tự và nút chi tiết
             return `<tr>
+                <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
                 <td style="text-align: center;">${r.time}</td>
                 <td><strong>${r.name}</strong></td>
                 <td style="text-align: center;">${r.sClass}</td>
                 <td>${r.examTitle}</td>
                 <td style="text-align: center;"><span class="badge-score ${badgeClass}">${r.totalScore}</span></td>
+                <td style="text-align: center;">
+                    ${examIdParam ? `<button onclick="viewStudentDetails('${examIdParam}', '${r.name}', '${r.sClass}', '${r.time}')" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-eye"></i> Xem</button>` : `<span style="color:#94a3b8; font-size:0.9rem;">Không có</span>`}
+                </td>
             </tr>`;
         }).join('');
     } else {
         if (avgEl) avgEl.innerText = '0.0';
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 20px;">Không có dữ liệu bài nộp thỏa mãn điều kiện lọc.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Không có dữ liệu bài nộp thỏa mãn điều kiện lọc.</td></tr>`;
     }
 }
+function viewStudentDetails(examId, stdName, stdClass, stdTime) {
+    document.getElementById('student-details-modal').style.display = 'flex';
+    document.getElementById('detail-std-name').innerText = stdName;
+    document.getElementById('detail-std-class').innerText = stdClass;
+    const contentBox = document.getElementById('student-details-content');
+    contentBox.innerHTML = '<p style="text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tìm dữ liệu bài làm...</p>';
 
-       function exportScoresToExcel() {
+    // Lấy đề thi gốc để so sánh đáp án
+    const examObj = examBank.find(e => e.id === examId);
+    if (!examObj || !examObj.questions) {
+        contentBox.innerHTML = '<p style="color: #dc2626;">Lỗi: Không tìm thấy đề thi gốc trên hệ thống.</p>';
+        return;
+    }
+
+    db.ref(`exam_results_details/${examId}`).once('value', snapshot => {
+        const val = snapshot.val();
+        if (!val) {
+            contentBox.innerHTML = '<p style="color: #ea580c;"><i class="fa-solid fa-triangle-exclamation"></i> Không có dữ liệu chi tiết (Học sinh này làm bài trước khi hệ thống cập nhật tính năng mới).</p>';
+            return;
+        }
+
+        // Tìm đúng bài của học sinh này
+        const records = Object.values(val);
+        const stdRecord = records.find(r => r.name === stdName && r.class === stdClass);
+
+        if (!stdRecord) {
+            contentBox.innerHTML = '<p style="color: #ea580c;">Không tìm thấy bản ghi chi tiết của học sinh này.</p>';
+            return;
+        }
+
+        const qList = examObj.questions;
+        const ansObj = stdRecord.answers || {};
+        
+        let html = `<div style="margin-bottom: 15px; font-weight: bold; color: #16a34a;">Điểm hệ thống ghi nhận: ${stdRecord.score} / 10</div>`;
+
+        qList.forEach((q, idx) => {
+            const qId = q.id || `Q_${idx+1}`;
+            const stdAns = ansObj[qId] || '';
+            const correctAns = String(q.ans || '').trim();
+            const qType = q.type || 'MCQ';
+
+            let isCorrect = false;
+            let ansDisplayHtml = '';
+
+            if (qType === 'MCQ' || qType === 'SA') {
+                isCorrect = (stdAns.toUpperCase() === correctAns.toUpperCase() && stdAns !== '');
+                ansDisplayHtml = `
+                    <div style="display: flex; gap: 20px; font-size: 1rem; margin-top: 5px;">
+                        <span>Học sinh chọn: <strong style="color: ${isCorrect ? '#16a34a' : '#dc2626'};">${stdAns || '(Bỏ trống)'}</strong></span>
+                        <span>Đáp án đúng: <strong style="color: #16a34a;">${correctAns}</strong></span>
+                        <span>Đánh giá: ${isCorrect ? '<i class="fa-solid fa-check" style="color:#16a34a;"></i> Đúng' : '<i class="fa-solid fa-xmark" style="color:#dc2626;"></i> Sai'}</span>
+                    </div>`;
+            } else if (qType === 'TF') {
+                // Đúng sai 4 ý
+                const correctArr = q.ansOptions || ['D','D','D','D'];
+                const stdArr = stdAns.padEnd(4, '-').split('');
+                
+                let tfHtml = `<div style="margin-top: 5px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.95rem;">`;
+                ['a', 'b', 'c', 'd'].forEach((ch, sIdx) => {
+                    const sAns = stdArr[sIdx];
+                    const cAns = correctArr[sIdx];
+                    const subCorrect = (sAns === cAns && sAns !== '-');
+                    tfHtml += `
+                        <div style="background: ${subCorrect ? '#f0fdf4' : '#fef2f2'}; border: 1px solid ${subCorrect ? '#bbf7d0' : '#fecaca'}; padding: 6px; border-radius: 6px; text-align: center;">
+                            Ý ${ch}) HS: <strong>${sAns}</strong> | ĐA: <strong style="color:#16a34a">${cAns}</strong><br>
+                            ${subCorrect ? '✅' : '❌'}
+                        </div>`;
+                });
+                tfHtml += `</div>`;
+                ansDisplayHtml = tfHtml;
+            }
+
+            html += `
+                <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #f8fafc;">
+                    <strong style="color: #334155;">Câu ${idx + 1}:</strong> ${q.q.replace(/<[^>]*>/g, '').substring(0, 80)}...
+                    ${ansDisplayHtml}
+                </div>
+            `;
+        });
+
+        contentBox.innerHTML = html;
+    });
+}
+      function exportScoresToExcel() {
             if (!globalScoresData || globalScoresData.length === 0) { alert("Chưa có dữ liệu để xuất Excel!"); return; }
 
-            // Lấy điều kiện lọc hiện tại đang chọn trên màn hình
             const fClass = (document.getElementById('filter-score-class')?.value || 'all').trim().toLowerCase();
             const fExam = (document.getElementById('filter-score-exam')?.value || 'all').trim().toLowerCase();
 
-            // Lọc dữ liệu y hệt như đang hiển thị trên bảng
-            let filteredData = globalScoresData.filter(r => {
+            let displayList = globalScoresData.filter(r => {
                 const itemClass = String(r.sClass || '').trim().toLowerCase();
                 const itemExam = String(r.examTitle || '').trim().toLowerCase();
-                const matchClass = (fClass === 'all' || fClass === '' || itemClass === fClass);
-                const matchExam = (fExam === 'all' || fExam === '' || itemExam === fExam);
-                return matchClass && matchExam;
+                return (fClass === 'all' || fClass === '' || itemClass === fClass) && (fExam === 'all' || fExam === '' || itemExam === fExam);
             });
 
-            if (filteredData.length === 0) { alert("Không có dữ liệu nào khớp với điều kiện lọc để xuất!"); return; }
+            if (displayList.length === 0) { alert("Không có dữ liệu khớp với bộ lọc!"); return; }
 
-            let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td { mso-number-format:'\\@'; }</style></head><body><table border="1"><tr style="background-color:#2563eb; color:white; font-weight:bold;"><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th></tr>`;
+            displayList.sort((a, b) => {
+                let classCmp = a.sClass.localeCompare(b.sClass, 'vi', { numeric: true });
+                if (classCmp !== 0) return classCmp;
+                return a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' });
+            });
+
+            let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td { mso-number-format:'\\@'; }</style></head><body><table border="1"><tr style="background-color:#2563eb; color:white; font-weight:bold;"><th>STT</th><th>Thời Gian</th><th>Họ và Tên</th><th>Lớp</th><th>Bài Thi</th><th>Điểm</th></tr>`;
             
-            // Chỉ xuất ra Excel những học sinh đã được lọc
-            filteredData.forEach(r => {
-                tableHtml += `<tr><td style="text-align:center;">${r.time}</td><td>${r.name}</td><td style="text-align:center;">${r.sClass}</td><td>${r.examTitle}</td><td style="text-align:center; font-weight:bold;">${r.totalScore}</td></tr>`;
+            displayList.forEach((r, idx) => {
+                tableHtml += `<tr><td style="text-align:center;">${idx + 1}</td><td style="text-align:center;">${r.time}</td><td>${r.name}</td><td style="text-align:center;">${r.sClass}</td><td>${r.examTitle}</td><td style="text-align:center; font-weight:bold;">${r.totalScore}</td></tr>`;
             });
             tableHtml += `</table></body></html>`;
             
@@ -1721,7 +1819,6 @@ function renderScoresTable() {
             link.download = `Bang_Diem_${new Date().toLocaleDateString("vi-VN").replace(/\//g, "-")}.xls`;
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
-
         // QUẢN LÝ LỚP
         let teacherClasses = JSON.parse(localStorage.getItem('teacher_classes_list')) || ["10A1", "10A2", "10A3", "12A1", "12A3", "12A5", "Học thêm 1", "Lớp tự do"];
         function saveTeacherClasses() {
@@ -2167,6 +2264,16 @@ renderMath(document.getElementById('quiz-content'));
                 return; // Dừng hàm tại đây, không lưu điểm thi
             }
               let finalScore = maxPossibleScore > 0 ? ((totalWeightedScore / maxPossibleScore) * 10).toFixed(2) : '10.00';
+          if (activeExam.mode === 'KIEMTRA' || activeExam.mode === 'LUYENTAP') {
+                const cleanKeyForFirebase = `${name.replace(/[/.#$\[\]]/g, "_")}_${sClass.replace(/[/.#$\[\]]/g, "_")}_${new Date().getTime()}`;
+                db.ref(`exam_results_details/${activeExam.id}/${cleanKeyForFirebase}`).set({
+                    name: name,
+                    class: sClass,
+                    time: new Date().toLocaleString("vi-VN"),
+                    score: finalScore,
+                    answers: surveyResponses // Lấy nguyên toàn bộ lựa chọn A B C D của học sinh
+                }).catch(e => console.log("Không thể lưu chi tiết Firebase"));
+            }
             const resDiv = document.getElementById('quiz-result');
             resDiv.style.display = 'block';
             resDiv.innerHTML = `🎉 Điểm số: <strong>${finalScore} / 10</strong>`;
