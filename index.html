@@ -2353,14 +2353,15 @@ function renderScoresTable() {
     let displayList = (globalScoresData || []).filter(r => {
         const itemClass = String(r.sClass || '').trim().toLowerCase();
         const itemExam = String(r.examTitle || '').trim().toLowerCase();
-        return (fClass === 'all' || fClass === '' || itemClass === fClass) && (fExam === 'all' || fExam === '' || itemExam === fExam);
+        return (fClass === 'all' || fClass === '' || itemClass === fClass) && 
+               (fExam === 'all' || fExam === '' || itemExam === fExam);
     });
 
-    // Sắp xếp tự động: Lớp -> Tên học sinh ABC
+    // Sắp xếp an toàn: Chuyển toàn bộ tên và lớp sang chuỗi chữ để tránh lỗi khi học sinh đặt tên là số
     displayList.sort((a, b) => {
-        let classCmp = a.sClass.localeCompare(b.sClass, 'vi', { numeric: true });
+        let classCmp = String(a.sClass || '').localeCompare(String(b.sClass || ''), 'vi', { numeric: true });
         if (classCmp !== 0) return classCmp;
-        return a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' });
+        return String(a.name || '').localeCompare(String(b.name || ''), 'vi', { sensitivity: 'base' });
     });
 
     const totalEl = document.getElementById('stat-total-submissions');
@@ -2376,9 +2377,12 @@ function renderScoresTable() {
         if (avgEl) avgEl.innerText = count > 0 ? (sum / count).toFixed(2) : '0.0';
 
         tbody.innerHTML = displayList.map((r, index) => {
-            let badgeClass = (parseFloat(String(r.totalScore).replace(',', '.')) >= 5) ? 'badge-pass' : 'badge-fail';
+            let num = parseFloat(String(r.totalScore).replace(',', '.'));
+            let badgeClass = (!isNaN(num) && num >= 5) ? 'badge-pass' : 'badge-fail';
+            
+            // Tìm bài thi tương ứng để lấy mã đề mở chi tiết
             let examIdParam = '';
-            let matchedExam = examBank.find(ex => ex.title.trim() === r.examTitle);
+            let matchedExam = examBank.find(ex => String(ex.title || '').trim().toLowerCase() === String(r.examTitle || '').trim().toLowerCase());
             if (matchedExam) examIdParam = matchedExam.id;
 
             return `<tr>
@@ -2389,16 +2393,15 @@ function renderScoresTable() {
                 <td>${r.examTitle}</td>
                 <td style="text-align: center;"><span class="badge-score ${badgeClass}">${r.totalScore}</span></td>
                 <td style="text-align: center;">
-                    ${examIdParam ? `<button onclick="viewStudentDetails('${examIdParam}', '${r.name}', '${r.sClass}')" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-eye"></i> Xem</button>` : `<span style="color:#94a3b8; font-size:0.9rem;">Không có</span>`}
+                    ${examIdParam ? `<button type="button" onclick="viewStudentDetails('${examIdParam}', '${String(r.name).replace(/'/g, "\\'")}', '${r.sClass}')" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-eye"></i> Xem</button>` : `<span style="color:#94a3b8; font-size:0.9rem;">---</span>`}
                 </td>
             </tr>`;
         }).join('');
     } else {
         if (avgEl) avgEl.innerText = '0.0';
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Không có dữ liệu bài nộp.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Không có dữ liệu bài nộp thỏa mãn điều kiện lọc.</td></tr>`;
     }
 }
-
 // === 2. HÀM XUẤT EXCEL (CÓ STT + CHỈ XUẤT MỤC ĐÃ LỌC) ===
 function exportScoresToExcel() {
     if (!globalScoresData || globalScoresData.length === 0) { alert("Chưa có dữ liệu để xuất Excel!"); return; }
