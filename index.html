@@ -616,11 +616,26 @@
     
     <!-- ĐÁNH DẤU BẢN QUYỀN TÁC GIẢ -->
     <div style="text-align: center; padding: 25px 15px 15px 15px; margin-top: 40px; color: #64748b; font-size: 1rem; border-top: 1px solid #e2e8f0; line-height: 1.6; font-family: 'Times New Roman', Times, serif;">
-        <strong>© 2026 Hệ thống Khảo thí & Học tập Số hóa</strong><br>
-        Nghiên cứu & phát triển bởi <span style="color: #1d4ed8; font-weight: bold;">GV NTT</span> – Trường THPT Long Thới
+           Nghiên cứu & phát triển bởi <span style="color: #1d4ed8; font-weight: bold;">GV NTT</span> – Trường THPT Long Thới
     </div>
     <div class="toast-msg" id="toast">Đã sao chép link giao đề!</div>
-
+<!-- HỘP THOẠI XEM CHI TIẾT BÀI LÀM HỌC SINH -->
+    <div id="student-details-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 999999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 750px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden;">
+            <div style="padding: 18px 24px; background: #eff6ff; border-bottom: 2px solid #bfdbfe; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; color: #1e40af; font-size: 1.3rem;"><i class="fa-solid fa-user-check"></i> CHI TIẾT BÀI LÀM HỌC SINH</h3>
+                    <div style="margin-top: 4px; font-size: 0.95rem; color: #64748b;">
+                        Học sinh: <strong id="detail-std-name" style="color: #ea580c;">---</strong> | Lớp: <strong id="detail-std-class">---</strong>
+                    </div>
+                </div>
+                <button type="button" onclick="closeStudentDetailsModal()" style="background: #fee2e2; border: none; color: #dc2626; font-size: 1.4rem; font-weight: bold; width: 38px; height: 38px; border-radius: 50%; cursor: pointer;">&times;</button>
+            </div>
+            <div id="student-details-content" style="padding: 24px; overflow-y: auto; flex-grow: 1; font-size: 1.05rem; line-height: 1.7;">
+                <p style="text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu bài làm...</p>
+            </div>
+        </div>
+    </div>
     <script>
         const TEACHERS_DIRECTORY = {
             'trucnt':  { 
@@ -688,12 +703,15 @@
         let currentTeacherId = localStorage.getItem('current_teacher_id') || '';
         let SCRIPT_URL = '';
 
-        function getTeacherScriptUrl(tId) {
+       function getTeacherScriptUrl(tId) {
+            // ƯU TIÊN 1: Lấy link cô vừa dán (hoặc link dự phòng đã lưu trong máy tính)
+            let savedUrl = localStorage.getItem('teacher_script_url_' + tId);
+            if (savedUrl && savedUrl.trim() !== '') return savedUrl.trim();
+            
+            // ƯU TIÊN 2: Nếu không có link dán tay, mới xài link mặc định
             if (TEACHERS_DIRECTORY[tId] && TEACHERS_DIRECTORY[tId].defaultUrl && TEACHERS_DIRECTORY[tId].defaultUrl.trim() !== '') {
                 return TEACHERS_DIRECTORY[tId].defaultUrl.trim();
             }
-            let savedUrl = localStorage.getItem('teacher_script_url_' + tId);
-            if (savedUrl && savedUrl.trim() !== '') return savedUrl.trim();
             return '';
         }
 
@@ -705,15 +723,11 @@
                 urlRow.style.display = 'none';
                 return;
             }
-            if (!TEACHERS_DIRECTORY[tId].defaultUrl) {
-                urlRow.style.display = 'block';
-                const existingUrl = localStorage.getItem('teacher_script_url_' + tId) || '';
-                urlInput.value = existingUrl;
-                urlInput.placeholder = existingUrl ? "Link hiện tại (Dán link mới vào đây để đổi)" : "Dán link https://script.google.com/.../exec vào đây";
-            } else {
-                urlRow.style.display = 'none';
-                urlInput.value = TEACHERS_DIRECTORY[tId].defaultUrl;
-            }
+            // MỞ KHÓA: Luôn luôn hiện ô nhập link để cô tự do đổi link dự phòng
+            urlRow.style.display = 'block';
+            const existingUrl = getTeacherScriptUrl(tId);
+            urlInput.value = existingUrl;
+            urlInput.placeholder = "Dán link https://script.google.com/.../exec dự phòng vào đây";
         }
 
         async function submitTeacherGateLogin() {
