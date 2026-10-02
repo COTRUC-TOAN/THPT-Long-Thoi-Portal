@@ -654,17 +654,23 @@
             } catch(e) {}
         }
 
-        function startKahootMusicLoop() {
+       function startKahootMusicLoop() {
             try {
-                if (!kahootBgmAudio) { kahootBgmAudio.pause(); }
-                // Nhạc nền (Tạm dùng nhạc nhịp điệu nhanh)
-                kahootBgmAudio = new Audio('https://actions.google.com/sounds/v1/cartoon/woodpecker.ogg'); 
-                kahootBgmAudio.loop = true;
-                kahootBgmAudio.play().catch(e => console.log("Trình duyệt chặn autoplay nhạc nền"));
+                if (!kahootBgmAudio) {
+                    kahootBgmAudio = new Audio('https://actions.google.com/sounds/v1/cartoon/woodpecker.ogg');
+                    kahootBgmAudio.loop = true;
+                }
+                kahootBgmAudio.currentTime = 0; // Đặt lại về đầu bài
+                let playPromise = kahootBgmAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Trình duyệt yêu cầu tương tác trước khi phát âm thanh:", error);
+                    });
+                }
             } catch(e) {}
         }
 
-        function stopKahootMusicLoop() {
+       function stopKahootMusicLoop() {
             try {
                 if (kahootBgmAudio) {
                     kahootBgmAudio.pause();
@@ -1129,10 +1135,10 @@
                     qContent = split_a[0].replace(/^(?:C[âa]u|B[àa]i|C)\s*\d+[\s:.]?\s*/i, '').trim();
 
                     let rest = "a) " + split_a.slice(1).join("a) ");
-                    let m_a = rest.match(/a[\)\.]\s*([\s\S]*?)(?=(?:^|\s)b[\)\.]\s*)/i);
-                    let m_b = rest.match(/b[\)\.]\s*([\s\S]*?)(?=(?:^|\s)c[\)\.]\s*)/i);
-                    let m_c = rest.match(/c[\)\.]\s*([\s\S]*?)(?=(?:^|\s)d[\)\.]\s*)/i);
-                    let m_d = rest.match(/d[\)\.]\s*([\s\S]*)$/i);
+                    let m_a = rest.match(/(?:^|\n)\s*a[\)\.]\s*([\s\S]*?)(?=(?:\n|\s)b[\)\.]\s*)/i);
+                    let m_b = rest.match(/(?:\n|\s)b[\)\.]\s*([\s\S]*?)(?=(?:\n|\s)c[\)\.]\s*)/i);
+                    let m_c = rest.match(/(?:\n|\s)c[\)\.]\s*([\s\S]*?)(?=(?:\n|\s)d[\)\.]\s*)/i);
+                    let m_d = rest.match(/(?:\n|\s)d[\)\.]\s*([\s\S]*)$/i);
 
                     options[0] = m_a ? m_a[1].trim() : '';
                     options[1] = m_b ? m_b[1].trim() : '';
@@ -1176,7 +1182,7 @@
                 } 
                 else {
                     detectedType = 'SA';
-                    let ansGeneral = block.match(/(?:Đáp\s*án|Chọn|Đ\/A|Ans)\s*[:\-]?\s*([A-Za-z0-9,\.\-]+)/i);
+                   let ansGeneral = block.match(/(?:Đáp\s*án|Ans)\s*[:\-]?\s*([A-Za-z0-9,\.\-]+)/i);
                     if (ansGeneral) {
                         ans = ansGeneral[1].trim();
                         block = block.replace(ansGeneral[0], '').trim();
