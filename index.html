@@ -656,7 +656,7 @@
 
         function startKahootMusicLoop() {
             try {
-                if (kahootBgmAudio) { kahootBgmAudio.pause(); }
+                if (!kahootBgmAudio) { kahootBgmAudio.pause(); }
                 // Nhạc nền (Tạm dùng nhạc nhịp điệu nhanh)
                 kahootBgmAudio = new Audio('https://actions.google.com/sounds/v1/cartoon/woodpecker.ogg'); 
                 kahootBgmAudio.loop = true;
