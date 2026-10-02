@@ -61,7 +61,7 @@
         :root { --primary: #1d4ed8; --accent: #ea580c; --bg: #f8fafc; --card-bg: #ffffff; --text-dark: #0f172a; --text-muted: #64748b; --border-color: #e2e8f0; --radius-lg: 16px; --radius-md: 10px; --radius-pill: 50px; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        body { font-family: 'Times New Roman', Times, serif; background-color: var(--bg); color: var(--text-dark); min-height: 100vh; padding-bottom: 50px; font-size: 1.15rem; line-height: 1.5; }
+        body {overscroll-behavior-y: contain; font-family: 'Times New Roman', Times, serif; background-color: var(--bg); color: var(--text-dark); min-height: 100vh; padding-bottom: 50px; font-size: 1.15rem; line-height: 1.5; }
         .wrapper { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
         body.locked-ui .navbar, 
@@ -2213,6 +2213,8 @@
                 alert(`⚠️ Học sinh [${checkName} - ${checkClass}] đã làm bài này ${currentAttempts}/${maxAttempts} lần cho phép. Không thể nộp thêm!`);
                 return;
             }
+            const confirmSubmit = confirm("Em có chắc chắn muốn nộp bài không?");
+    if (!confirmSubmit) return;
 
             clearInterval(timerInterval);
             const name = checkName;
@@ -3070,6 +3072,31 @@ YÊU CẦU DÀNH CHO AI:
                 renderMath(contentBox);
             });
         }
+   // Chỉ cảnh báo chống thoát khi học sinh đang làm BÀI KIỂM TRA (không áp dụng cho Luyện tập)
+window.addEventListener('beforeunload', function (e) {
+    const examView = document.getElementById('examView') || document.getElementById('testContainer');
+    
+    // Kiểm tra xem màn hình làm bài có đang mở không
+    const isDoingExam = examView && examView.style.display !== 'none';
+
+    // Kiểm tra xem đây có phải là chế độ Kiểm tra tính điểm/tính giờ không (loại trừ chế độ practice/luyện tập)
+    const isPracticeMode = (typeof currentExamMode !== 'undefined' && currentExamMode === 'practice') ||
+                           (typeof isPractice !== 'undefined' && isPractice === true);
+
+    if (isDoingExam && !isPracticeMode) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+        // Khóa nút mũi tên quay lại (Back) trên điện thoại khi đang làm bài
+history.pushState(null, null, location.href);
+window.addEventListener('popstate', function () {
+    // Đẩy lại trạng thái để giữ chân ở trang hiện tại
+    history.pushState(null, null, location.href);
+    
+    // Hiện thông báo nhắc nhở học sinh
+    alert("⚠️ CẢNH BÁO: Em đang trong bài làm! Không được bấm nút quay lại để tránh bị mất bài thi.");
+});
     </script>
 </body>
 </html>
