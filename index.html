@@ -637,6 +637,42 @@
         </div>
     </div>
     <script>
+        // ============ KHU VỰC XỬ LÝ ÂM THANH KAHOOT ============
+        let kahootBgmAudio = null;
+
+        function playSound(type) {
+            try {
+                let url = '';
+                if (type === 'tick') url = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg'; // Tiếng bíp đếm ngược
+                if (type === 'correct') url = 'https://actions.google.com/sounds/v1/cartoon/cling_on_fork.ogg'; // Tiếng đúng
+                if (type === 'wrong') url = 'https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg'; // Tiếng sai
+                
+                if (url) {
+                    let audio = new Audio(url);
+                    audio.play().catch(e => {}); // Bỏ qua lỗi nếu trình duyệt chặn tự động phát
+                }
+            } catch(e) {}
+        }
+
+        function startKahootMusicLoop() {
+            try {
+                if (kahootBgmAudio) { kahootBgmAudio.pause(); }
+                // Nhạc nền (Tạm dùng nhạc nhịp điệu nhanh)
+                kahootBgmAudio = new Audio('https://actions.google.com/sounds/v1/cartoon/woodpecker.ogg'); 
+                kahootBgmAudio.loop = true;
+                kahootBgmAudio.play().catch(e => console.log("Trình duyệt chặn autoplay nhạc nền"));
+            } catch(e) {}
+        }
+
+        function stopKahootMusicLoop() {
+            try {
+                if (kahootBgmAudio) {
+                    kahootBgmAudio.pause();
+                    kahootBgmAudio.currentTime = 0;
+                }
+            } catch(e) {}
+        }
+        // ========================================================
         const TEACHERS_DIRECTORY = {
             'trucnt':  { 
                 name: 'Cô Nguyễn Thanh Trúc', 
@@ -2506,7 +2542,7 @@
             alert("🚀 Đã phát lệnh cho học sinh bắt đầu!");
         }
 
-       function joinKahootArena() {
+      function joinKahootArena() {
             kahootStdName = document.getElementById('k-std-name').value.trim();
             kahootStdClass = document.getElementById('k-std-class').value.trim();
             if (!kahootStdName || !kahootStdClass) { alert("Nhập đủ tên và lớp!"); return; }
