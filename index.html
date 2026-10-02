@@ -2506,7 +2506,7 @@
             alert("🚀 Đã phát lệnh cho học sinh bắt đầu!");
         }
 
-        function joinKahootArena() {
+       function joinKahootArena() {
             kahootStdName = document.getElementById('k-std-name').value.trim();
             kahootStdClass = document.getElementById('k-std-class').value.trim();
             if (!kahootStdName || !kahootStdClass) { alert("Nhập đủ tên và lớp!"); return; }
@@ -2515,12 +2515,16 @@
             const cleanName = kahootStdName.replace(/[/.#$\[\]]/g, "_");
             db.ref('kahoot_rooms/' + activeExam.id + '/students/' + cleanName).set({ name: kahootStdName, class: kahootStdClass });
 
-            db.ref('kahoot_rooms/' + activeExam.id).on('value', snapshot => {
-                const roomData = snapshot.val();
-                if (roomData && roomData.status === 'started') {
+            // SỬA LỖI Ở ĐÂY: Chỉ ngóng đúng biến "status" để xuất phát
+            const statusRef = db.ref('kahoot_rooms/' + activeExam.id + '/status');
+            statusRef.on('value', snapshot => {
+                if (snapshot.val() === 'started') {
                     document.getElementById('kahoot-lobby-box').style.display = 'none';
                     document.getElementById('kahoot-game-box').style.display = 'block';
                     loadKahootQuestion();
+                    
+                    // QUAN TRỌNG: Vào thi rồi thì tắt ngóng máy chủ để màn hình không bị giật/reset
+                    statusRef.off(); 
                 }
             });
         }
