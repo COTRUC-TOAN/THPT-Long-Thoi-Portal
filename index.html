@@ -3270,11 +3270,13 @@ YÊU CẦU DÀNH CHO AI:
             });
         }
 function openEditQuestionModal(qId) {
-            // Tìm trong Ngân hàng, nếu không có thì tìm trong hộp Đã Chọn
-            let q = questionBank.find(item => item.id === qId);
-            if (!q) q = selectedQuestions.find(item => item.id === qId);
+            // VÁ LỖI: Ưu tiên tìm trong hộp "Đã Chọn" trước (vì nó vừa được móc két sắt Firebase lấy đáp án về)
+            let q = selectedQuestions.find(item => item.id === qId);
+            
+            // Nếu không có mới tìm trong Ngân hàng chung
+            if (!q) q = questionBank.find(item => item.id === qId);
+            
             if (!q) { alert("Không tìm thấy câu hỏi!"); return; }
-
             document.getElementById('edit-q-id').value = q.id;
             document.getElementById('edit-q-type').value = q.type || 'MCQ';
             document.getElementById('edit-q-level').value = q.level || 'TH';
