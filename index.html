@@ -2053,9 +2053,39 @@ const idInput = document.getElementById('new-exam-id'); if (idInput && !idInput.
                 })
                 .catch(err => alert("Lỗi: " + err.message));
         }
-function loadExamToEdit(examId) {
+async function loadExamToEdit(examId) {
             const ex = examBank.find(e => String(e.id).trim() === String(examId).trim());
             if (!ex) { alert("Không tìm thấy dữ liệu đề thi này!"); return; }
+
+            // PHỤC HỒI ĐÁP ÁN BỊ ẨN CỦA ĐỀ KIỂM TRA TỪ KÉT SẮT FIREBASE
+            if (ex.mode === 'KIEMTRA') {
+                document.body.style.cursor = 'wait';
+                try {
+                    const snap = await db.ref(`exam_secure_keys/${ex.id}`).once('value');
+                    const secrets = snap.val() || {};
+                    
+                    if (ex.questions && ex.questions.length === 1 && ex.questions[0].isDynamicConfig) {
+                        ex.questions[0].configs.forEach(cfg => {
+                            cfg.pool.forEach(q => {
+                                if (secrets[q.id]) {
+                                    q.ans = secrets[q.id].ans || '';
+                                    q.ansOptions = secrets[q.id].ansOptions || [];
+                                    q.explanation = secrets[q.id].explanation || '';
+                                }
+                            });
+                        });
+                    } else if (ex.questions) {
+                        ex.questions.forEach(q => {
+                            if (secrets[q.id]) {
+                                q.ans = secrets[q.id].ans || '';
+                                q.ansOptions = secrets[q.id].ansOptions || [];
+                                q.explanation = secrets[q.id].explanation || '';
+                            }
+                        });
+                    }
+                } catch(e) { console.error("Lỗi tải đáp án từ Firebase:", e); }
+                document.body.style.cursor = 'default';
+            }
 
             switchTeacherTab('creator');
 
@@ -2089,7 +2119,6 @@ function loadExamToEdit(examId) {
             }
             alert(`📝 Đã nạp đề [${ex.title}]. Cô có thể chỉnh sửa rồi bấm "Lưu & Xuất Bản Đề" để ghi đè cập nhật!`);
         }
-
         async function deleteExamFromSystem(examId) {
             if (!confirm(`⚠️ Xóa đề [${examId}]?`)) return;
             try {
