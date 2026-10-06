@@ -410,7 +410,7 @@
                             <div class="form-row"><label>Chế Độ:</label><select class="form-input" id="new-exam-mode" onchange="toggleExamPasswordField()"><option value="LUYENTAP">🟢 Luyện Tập</option><option value="KIEMTRA">🔴 Kiểm Tra (Bảo Mật Cao)</option><option value="BAIGIANG">📘 Bài Giảng</option><option value="KAHOOT">⚡ Đấu Trường Kahoot</option><option value="KHAOSAT">📊 Khảo Sát Ý Kiến</option></select></div>
                         </div>
                             <div class="form-row"><label>Thời Gian (Phút):</label><input type="number" class="form-input" id="new-exam-time" value="45"></div>
-                       <div class="form-row"><label>Số lần làm tối đa (0 = Không giới hạn):</label><input type="number" class="form-input" id="new-exam-max-attempts" value="2" min="0" placeholder="VD: 1, 2, 3..."></div>   
+                       <div class="form-row"><label>Số lần làm tối đa (0 = Không giới hạn):</label><input type="number" class="form-input" id="new-exam-max-attempts" value="1" min="0" placeholder="VD: 1, 2, 3..."></div>   
                         
                         <div id="lecture-fields" style="display: none; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                             <h4 style="margin-top: 0; color: #0f172a; margin-bottom: 10px;"><i class="fa-solid fa-photo-film"></i> Thông tin Bài giảng & Tài liệu</h4>
@@ -452,6 +452,7 @@
                             <p style="font-size: 0.95rem; color: #1e40af; font-weight: bold; margin-bottom: 10px;">✨ Chế độ Tự Động: Dán hỗn hợp mọi dạng câu hỏi (Trắc nghiệm, Đúng/Sai, Ngắn), hệ thống tự bóc tách chuẩn 100% không cần chọn dạng!</p>
                             <div class="rich-textarea" id="direct-raw-text" contenteditable="true" style="height: 55vh; max-height: 55vh;" placeholder="Dán văn bản đề thi..."></div>
                             <button class="btn-start" style="width: 100%; background: #2563eb; margin-top: 10px;" onclick="parseDirectExam()"><i class="fa-solid fa-wand-magic-sparkles"></i> Tự Động Phân Tích</button>
+                            <button class="btn-start" id="btn-lock-batch" style="width: 100%; background: #0f766e; margin-top: 8px;" onclick="lockDirectBatch()"><i class="fa-solid fa-lock"></i> Chốt Phần Này Để Dán Phần Tiếp</button>
                             <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
                                 <strong style="color: #334155;">Xem Trước Gọn Gàng (<span id="direct-parsed-count">0</span> câu)</strong>
                                 <button class="btn-start" id="btn-save-parsed-bank" style="background: #059669; padding: 4px 10px; font-size: 0.9rem; display: none;" onclick="saveBankBulkToSheets()">Lưu Ngân Hàng</button>
@@ -518,7 +519,7 @@
                 <h3 id="quiz-title" style="color: #0f172a; font-size: 1.25rem;"></h3>
                 <div class="timer-box" id="timer-display"><i class="fa-regular fa-clock"></i> <span id="time-left">15:00</span></div>
             </div>
-            <div class="anti-cheat-alert" id="cheat-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Cảnh báo:</strong> Rời khỏi bài thi (<span id="cheat-count">0</span>/3 lần). Hệ thống ghi nhận mọi vi phạm!</div>
+            <div class="anti-cheat-alert" id="cheat-warning"><i class="fa-solid fa-triangle-exclamation"></i> <strong>Cảnh báo:</strong> Rời khỏi bài thi (<span id="cheat-count">0</span> lần). Hệ thống ghi nhận mọi vi phạm!</div>
             <div class="student-box"><input type="text" id="std-name" placeholder="Họ và tên *" required><input type="text" id="std-class" placeholder="Lớp (VD: 12A1) *" required></div>
             <form id="quiz-form"><div id="quiz-content"></div><button type="submit" class="btn-submit" id="btn-submit-quiz"><i class="fa-solid fa-paper-plane"></i> Nộp Bài & Xem Điểm</button></form>
             <div id="quiz-result"></div>
@@ -847,7 +848,7 @@
         }
 
         let examBank = []; let questionBank = [];
-        let selectedQuestions = []; let directParsedQuestions = []; 
+        let selectedQuestions = []; let directParsedQuestions = []; let directBatch = []; 
         let activeExam = null; let teacherPassAuth = ""; let currentGrade = 'all'; let currentTopic = 'all';
         let kahootCurrentIndex = 0; let kahootScore = 0; let kahootStdName = ""; let kahootStdClass = "";
         let kahootTimer = null; let kahootTimeLeft = 20;
@@ -1315,10 +1316,26 @@
             renderMath(document.getElementById('direct-preview-box'));
 
            // Cộng dồn câu mới vào danh sách cũ (không xóa mất câu cũ)
+            // Cách A: phân tích lại thì THAY THẾ đợt vừa bóc tách (chưa chốt), không cộng trùng; văn bản trong ô dán được giữ để sửa
+            selectedQuestions = selectedQuestions.filter(sq => !directBatch.includes(sq));
             selectedQuestions = [...selectedQuestions, ...directParsedQuestions];
+            directBatch = [...directParsedQuestions];
             updateSelectedItemsDisplay();
             
                 }
+
+        // Chốt phần vừa bóc tách: các câu vẫn nằm trong đề, xóa ô dán để dán phần tiếp theo
+        function lockDirectBatch() {
+            if (directBatch.length === 0) { alert("Chưa có phần nào để chốt! Cô hãy dán văn bản và bấm 'Tự Động Phân Tích' trước."); return; }
+            if (!confirm("Chốt " + directBatch.length + " câu vừa bóc tách?\nÔ dán sẽ được xóa để cô dán phần tiếp theo (các câu đã chốt vẫn nằm trong đề).")) return;
+            const n = directBatch.length;
+            directBatch = [];
+            directParsedQuestions = [];
+            document.getElementById('direct-raw-text').innerHTML = '';
+            document.getElementById('direct-preview-box').innerHTML = '<em>Đã chốt ' + n + ' câu. Cô dán phần tiếp theo vào ô trên rồi bấm Tự Động Phân Tích.</em>';
+            document.getElementById('direct-parsed-count').innerText = '0';
+            document.getElementById('btn-save-parsed-bank').style.display = 'none';
+        }
 
         async function saveBankBulkToSheets() {
             if (directParsedQuestions.length === 0) return;
@@ -1639,7 +1656,11 @@ function removeQuestionFromSelected(qId) {
         async function saveExamFinal() {
             const grade = document.getElementById('new-exam-grade').value;
             const topic = document.getElementById('new-exam-topic').value;
-            const examId = document.getElementById('new-exam-id').value.trim();
+            const typedExamId = document.getElementById('new-exam-id').value.trim();
+            // Mã đề MỚI tự gắn mã giáo viên ở đầu, để không trùng với đề của giáo viên khác trên Firebase dùng chung.
+            // Đề đã có sẵn trong danh sách của cô (hoặc đã có mã giáo viên) thì giữ nguyên mã để ghi đè cập nhật như cũ.
+            const idPrefix = currentTeacherId ? (currentTeacherId + '-') : '';
+            const examId = (!typedExamId || !idPrefix || typedExamId.startsWith(idPrefix) || examBank.some(e => String(e.id) === typedExamId)) ? typedExamId : (idPrefix + typedExamId);
             const title = document.getElementById('new-exam-title').value.trim();
             const mode = document.getElementById('new-exam-mode').value;
             const timeLimit = parseInt(document.getElementById('new-exam-time').value) || 45;
@@ -1653,6 +1674,10 @@ function removeQuestionFromSelected(qId) {
             }
 
             if (!examId || !title) { alert("⚠️ Vui lòng nhập đầy đủ Mã đề và Tên đề thi!"); return; }
+            if (examId !== typedExamId) {
+                document.getElementById('new-exam-id').value = examId;
+                alert("ℹ️ Mã đề được tự thêm mã giáo viên: " + examId + "\n(để không trùng với đề của giáo viên khác)");
+            }
             if (mode !== 'BAIGIANG' && (!selectedQuestions || selectedQuestions.length === 0)) {
                 alert("⚠️️ Bạn chưa có câu hỏi nào trong đề! Hãy bấm 'Tự Động Phân Tích' hoặc chọn từ Ngân hàng/Ma trận.");
                 return;
@@ -2177,9 +2202,7 @@ async function loadExamToEdit(examId) {
             const mode = document.getElementById("new-exam-mode").value;
             document.getElementById("exam-password-row").style.display = (mode === "KIEMTRA") ? "block" : "none";
             document.getElementById("lecture-fields").style.display = (mode === "BAIGIANG") ? "block" : "none";
-            if (directParsedQuestions && directParsedQuestions.length > 0) {
-                parseDirectExam();
-            }
+            if (typeof updateSelectedItemsDisplay === "function") updateSelectedItemsDisplay();
         }
 
         function shuffleArray(array) {
@@ -2190,7 +2213,20 @@ async function loadExamToEdit(examId) {
             return array;
         }
 
-        let timerInterval = null; let secondsRemaining = 0; let cheatWarnings = 0;
+        let timerInterval = null; let secondsRemaining = 0; let cheatWarnings = 0; let examTimeUp = false; let submitCheckBusy = false;
+
+        // So sánh câu trả lời ngắn: bỏ khoảng trắng, 1,5 = 1.5, không phân biệt hoa thường
+        function normShortAns(v) {
+            return String(v === undefined || v === null ? '' : v).trim().replace(/\s+/g, '').replace(/,/g, '.').toLowerCase();
+        }
+        function sameShortAns(a, b) {
+            const x = normShortAns(a), y = normShortAns(b);
+            if (x === '' || y === '') return false;
+            if (x === y) return true;
+            const isNum = /^[-+]?(\d+\.?\d*|\.\d+)$/;
+            if (isNum.test(x) && isNum.test(y)) return Math.abs(parseFloat(x) - parseFloat(y)) < 1e-9;
+            return false;
+        }
         
         function submitReviewLookup() {
             const askName = document.getElementById('review-std-name').value.trim();
@@ -2266,10 +2302,25 @@ async function loadExamToEdit(examId) {
         }
 
         function startTraditionalExamMode() {
+            // Đề Kiểm tra: máy này đã hết giờ đề này mà chưa nộp thì không cấp đồng hồ mới
+            // (dấu cũ quá 6 tiếng thì bỏ qua để máy dùng chung không bị kẹt)
+            if (activeExam.mode === 'KIEMTRA') {
+                try {
+                    const savedEnd = parseInt(localStorage.getItem('exam_end_' + activeExam.id) || '0', 10);
+                    const nowMs = Date.now();
+                    if (savedEnd > 0 && savedEnd <= nowMs && (nowMs - savedEnd) < 6 * 60 * 60 * 1000) {
+                        alert("⏰ Thời gian làm bài đề này trên máy này đã hết.\nNếu em chưa nộp được bài, hãy báo giáo viên để được hỗ trợ.");
+                        showPortalView();
+                        return;
+                    }
+                } catch (e) {}
+            }
+            examTimeUp = false;
             document.getElementById('quiz-view').style.display = 'block';
             document.getElementById('quiz-title').innerText = activeExam.title;
             document.getElementById('quiz-result').style.display = 'none';
             document.getElementById('cheat-warning').style.display = 'none';
+            document.getElementById('cheat-count').innerText = '0';
             document.getElementById('quiz-form').reset();
             document.getElementById('btn-submit-quiz').disabled = false;
             document.getElementById('btn-submit-quiz').style.display = 'block';
@@ -2304,14 +2355,27 @@ async function loadExamToEdit(examId) {
             activeExam.currentDrawnQuestions = processedQuestions;
 
             clearInterval(timerInterval);
-            secondsRemaining = (parseInt(activeExam.timeLimit) || 45) * 60;
+            // Đồng hồ chạy theo giờ thật: tải lại trang không bị làm lại từ đầu (chỉ áp dụng đề Kiểm tra)
+            const timerKey = 'exam_end_' + activeExam.id;
+            let examEndAt = Date.now() + (parseInt(activeExam.timeLimit) || 45) * 60 * 1000;
+            if (activeExam.mode === 'KIEMTRA') {
+                try {
+                    const saved = parseInt(localStorage.getItem(timerKey) || '0', 10);
+                    if (saved > Date.now() && saved <= examEndAt) examEndAt = saved;
+                    else localStorage.setItem(timerKey, String(examEndAt));
+                } catch (e) {}
+            }
+            secondsRemaining = Math.max(0, Math.round((examEndAt - Date.now()) / 1000));
             timerInterval = setInterval(() => {
-                secondsRemaining--;
+                secondsRemaining = Math.max(0, Math.round((examEndAt - Date.now()) / 1000));
                 let m = Math.floor(secondsRemaining / 60); let s = secondsRemaining % 60;
                 document.getElementById('time-left').innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
                 if (secondsRemaining <= 0) {
                     clearInterval(timerInterval);
-                    alert("⏰ Đã hết thời gian làm bài!"); submitQuiz();
+                    examTimeUp = true;
+                    // Hết giờ thì khóa các ô trả lời, không làm thêm được nữa
+                    document.querySelectorAll('#quiz-content input').forEach(inp => { inp.disabled = true; });
+                    alert("⏰ Đã hết thời gian làm bài! Hệ thống sẽ nộp bài của em."); submitQuiz();
                 }
             }, 1000);
 
@@ -2374,10 +2438,33 @@ async function loadExamToEdit(examId) {
                 alert(`⚠️ Học sinh [${checkName} - ${checkClass}] đã làm bài này ${currentAttempts}/${maxAttempts} lần cho phép. Không thể nộp thêm!`);
                 return;
             }
-            const confirmSubmit = confirm("Em có chắc chắn muốn nộp bài không?");
+            // ĐỀ KIỂM TRA: hỏi máy chủ xem em này đã nộp đủ số lần chưa (chặn đổi trình duyệt/xóa dữ liệu để làm lại)
+            // Tên và lớp được so không phân biệt hoa/thường và khoảng trắng thừa. Lỗi mạng hoặc quyền đọc thì cho qua, không chặn nhầm.
+            const serverPart = (t) => String(t).normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase().replace(/[/.#$\[\]]/g, "_");
+            const serverKey = `${serverPart(checkName)}_${serverPart(checkClass)}`;
+            let prevServerAttempts = 0;
+            if (activeExam.mode === 'KIEMTRA' && maxAttempts > 0) {
+                if (submitCheckBusy) return;
+                submitCheckBusy = true;
+                try {
+                    const snap = await Promise.race([
+                        db.ref(`exam_results_details/${activeExam.id}/${serverKey}`).once('value'),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+                    ]);
+                    const oldRec = snap.val();
+                    if (oldRec) prevServerAttempts = parseInt(oldRec.attempts, 10) || 1;
+                } catch (e) { /* không đọc được thì cho qua */ }
+                submitCheckBusy = false;
+                if (prevServerAttempts >= maxAttempts) {
+                    alert(`⚠️ Hệ thống ghi nhận [${checkName} - ${checkClass}] đã nộp bài kiểm tra này ${prevServerAttempts}/${maxAttempts} lần cho phép nên không thể nộp thêm.\nNếu em chưa từng nộp bài này (có thể trùng tên và lớp với bạn khác), hãy báo giáo viên.`);
+                    return;
+                }
+            }
+            const confirmSubmit = examTimeUp ? true : confirm("Em có chắc chắn muốn nộp bài không?");
             if (!confirmSubmit) return;
 
             clearInterval(timerInterval);
+            try { localStorage.removeItem('exam_end_' + activeExam.id); } catch (e) {}
             const name = checkName;
             const sClass = checkClass;
             const btnSubmit = document.getElementById('btn-submit-quiz');
@@ -2424,7 +2511,7 @@ async function loadExamToEdit(examId) {
                     studentResponses[q.id || `Q_${qNum}`] = userAns;
                     let correctA = String(targetAns || "").trim().toLowerCase();
                     // KHÔNG CHO ĐIỂM NẾU BỎ TRỐNG
-                    if (userAns !== "" && correctA !== "" && userAns.toLowerCase() === correctA) {
+                    if (userAns !== "" && correctA !== "" && sameShortAns(userAns, correctA)) {
                         totalWeightedScore += weight;
                     }
                 } else if (qType === 'TF') {
@@ -2464,12 +2551,14 @@ async function loadExamToEdit(examId) {
             // CHỐNG LỖI KHI BÀI THI CÓ 0 CÂU GÂY LỖI PHÉP CHIA
             if (maxPossibleScore === 0) finalScore = "0.00";
 
-            const cleanKeyForFirebase = `${name.replace(/[/.#$\[\]]/g, "_")}_${sClass.replace(/[/.#$\[\]]/g, "_")}`;
+            const cleanKeyForFirebase = serverKey;
             db.ref(`exam_results_details/${activeExam.id}/${cleanKeyForFirebase}`).set({
                 name: name,
                 class: sClass,
                 time: new Date().toLocaleString("vi-VN"),
                 score: finalScore,
+                attempts: prevServerAttempts + 1,
+                leaveCount: cheatWarnings,
                 answers: studentResponses,
                 drawnQuestions: activeExam.currentDrawnQuestions || activeExam.questions || []
             }).catch(e => console.log(e));
@@ -2534,7 +2623,7 @@ async function loadExamToEdit(examId) {
                         if (inputEl) {
                             const uAns = inputEl.value.trim();
                             const cAns = String(q.ans || "").trim();
-                            if (uAns.toLowerCase() === cAns.toLowerCase() && uAns !== "") {
+                            if (sameShortAns(uAns, cAns)) {
                                 inputEl.style.borderColor = '#16a34a'; inputEl.style.backgroundColor = '#f0fdf4'; inputEl.style.color = '#166534';
                             } else {
                                 inputEl.style.borderColor = '#dc2626'; inputEl.style.backgroundColor = '#fef2f2'; inputEl.style.color = '#991b1b';
@@ -3155,6 +3244,7 @@ YÊU CẦU DÀNH CHO AI:
                     <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         <div><strong>Đề:</strong> ${examObj.title} <span style="color: #64748b;">[${examObj.mode || 'Tự do'}]</span></div>
                         <div style="font-size: 1.25rem; font-weight: bold; color: #16a34a;">Điểm: ${stdRecord.score} / 10</div>
+                        ${(teacherPassAuth && stdRecord.leaveCount !== undefined) ? `<div style="font-size: 0.95rem; font-weight: bold; color: ${stdRecord.leaveCount > 0 ? '#dc2626' : '#64748b'};">Số lần rời trang khi làm bài: ${stdRecord.leaveCount}</div>` : ''}
                     </div>
                 `;
 
@@ -3236,7 +3326,7 @@ YÊU CẦU DÀNH CHO AI:
                         cardOptionsHtml = tfRows;
                     } 
                     else if (qType === 'SA') {
-                        const isCorrect = (stdAns.toLowerCase() === correctAns.toLowerCase() && stdAns !== '');
+                        const isCorrect = sameShortAns(stdAns, correctAns);
                         cardOptionsHtml = `
                             <div style="margin-top: 10px; padding: 12px; background: ${isCorrect ? '#f0fdf4' : '#fef2f2'}; border-radius: 8px; border: 1px solid ${isCorrect ? '#bbf7d0' : '#fecaca'};">
                                 <div>Học sinh trả lời: <strong style="color: ${isCorrect ? '#16a34a' : '#dc2626'}; font-size: 1.15rem;">${stdAns || '(Bỏ trống)'}</strong> ${isCorrect ? '✅' : '❌'}</div>
@@ -3350,7 +3440,18 @@ function closeEditQuestionModal() { document.getElementById('edit-question-modal
                 closeEditQuestionModal(); filterQuestionBankList();
             }
         }
-   // CẢNH BÁO CHỐNG THOÁT TRANG KHI ĐANG THI KIỂM TRA
+   // ĐẾM SỐ LẦN RỜI TRANG KHI ĐANG LÀM ĐỀ KIỂM TRA (chỉ ghi nhận, không tự nộp bài)
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) return;
+            const quizView = document.getElementById('quiz-view');
+            const quizContent = document.getElementById('quiz-content');
+            const doing = quizView && quizView.style.display === 'block' && quizContent && quizContent.style.display !== 'none';
+            if (!doing || !activeExam || activeExam.mode !== 'KIEMTRA' || examTimeUp) return;
+            cheatWarnings++;
+            document.getElementById('cheat-count').innerText = cheatWarnings;
+            document.getElementById('cheat-warning').style.display = 'block';
+        });
+        // CẢNH BÁO CHỐNG THOÁT TRANG KHI ĐANG THI KIỂM TRA
         window.addEventListener('beforeunload', function (e) {
             const quizView = document.getElementById('quiz-view');
             const isDoingExam = quizView && quizView.style.display === 'block';
